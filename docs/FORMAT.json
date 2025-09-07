@@ -1,0 +1,58 @@
+{
+    "metadata":{
+        "version":0.0
+    },
+    "teams/groups" : {
+            "TEAM 1":{
+                "player_1":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_2":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_3":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                }
+            },
+            "TEAM 2":{
+                "player_1":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_2":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_3":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                }
+            },
+            "TEAM 3":{
+                "player_1":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_2":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                },
+                "player_3":{"TIME": {
+                    "LOCATION": ["X","Y"],
+                    "CONFIDENCE": 0.123
+                    }
+                }
+            }
+        }
+}
