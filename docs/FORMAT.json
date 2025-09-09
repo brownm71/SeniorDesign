@@ -1,6 +1,8 @@
 {
     "metadata":{
-        "version":0.0
+        "version":0.0,
+        "game_ID" : "its a game!",
+        "date" : "50/50/99"
     },
     "teams/groups" : {
             "TEAM 1":{
