@@ -17,10 +17,25 @@ def readJson(filename: str):
     
     return json_dict['metadata'] , teams
 
+def writeJson(filepath:str,teams : list[Team],metadata : dict):
+    """Takes in teams, and metadata, and creates a new json
+    or overwrites and existing file."""
+    resultDict = {}
+    resultDict['metadata'] = metadata
+    teamDict = {}
+    for team in teams:
+        teamDict[team.name] = team.toDict()
+    resultDict['teams/groups'] = teamDict
+    with open(filepath,'w') as file:
+        json.dump(resultDict,file,indent=4)
+
 
 if __name__ == '__main__':
     # testing IO
     filename = "SeniorDesign/docs/FORMAT.json"
-    result = readJson(filename)
-    print(result[0])
-    print(result[1])
+    metaData,teams = readJson(filename)
+    print(metaData)
+    print(teams)
+
+    fileOutName = 'TestOut.json'
+    writeJson(fileOutName,teams,metaData)
