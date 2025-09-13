@@ -1,0 +1,26 @@
+{
+    "metadata":{
+        "version":0.0,
+        "game_ID" : "its a game!",
+        "date" : "9/12/25",
+        "time_step" : "1"
+    },
+    "teams/groups" : {
+            "TEAM 1":{
+                "player_1":{
+                    "0": {
+                        "LOCATION": [0,0],
+                        "CONFIDENCE": 1
+                        },
+                    "2": {
+                        "LOCATION": [2,2],
+                        "CONFIDENCE": 1
+                        },
+                    "4": {
+                        "LOCATION": [4,4],
+                        "CONFIDENCE": 1
+                        }
+                }
+            }
+        }
+}
