@@ -84,6 +84,39 @@ class Player:
                 self.times_to_pos[time]['LOCATION'] = points[i]
                 self.times_to_pos[time]['CONFIDENCE'] = 0.5 # Mark as interpolated 
 
+    def combine(self, other:Player):
+        """Combine two player objects into one player with updated confidence levels and positions."""
+        if (self.name != other.name):
+            raise Exception("Invalid combination.")
+        newTtoP :dict[float,dict[str, tuple|float]]= {}
+        sharedTimes = set()
+        for time in self.times_to_pos.keys():
+            sharedTimes.add(time)
+        for time in other.times_to_pos.keys():
+            sharedTimes.add(time)
+        
+        # sharedTimes contains all unique time values
+        for time in sharedTimes:
+            currentData = self.times_to_pos.get(time)
+            newData = other.times_to_pos.get(time)
+            if (currentData is None):
+                newTtoP[time] = newData
+                continue
+            elif (newData is None):
+                newTtoP[time] = currentData
+                continue
+            newTtoP[time] = dict()
+            pointTot = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS']
+            selfWeight = self.times_to_pos.get(time)['NUMPOINTS'] / pointTot
+            otherWeight = other.times_to_pos.get(time)['NUMPOINTS'] / pointTot
+            newTtoP[time]['CONFIDENCE'] = (selfWeight * (self.times_to_pos.get(time)['CONFIDENCE']) + otherWeight * (other.times_to_pos.get(time)['CONFIDENCE'])) / 2
+            newTtoP[time]['LOCATION'] = []
+            newTtoP[time]['LOCATION'][0] = (selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][0]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][0])) / 2
+            newTtoP[time]['LOCATION'][1] = (selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][1]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][1])) / 2
+            newTtoP[time]['NUMPOINTS'] = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS'] + 1
+        self.times_to_pos = newTtoP
+
+
 class Team:
     """A List of Players"""
     list_of_players :list[Player]
