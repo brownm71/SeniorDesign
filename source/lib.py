@@ -113,6 +113,10 @@ class Player:
             newTtoP[time]['LOCATION'] = []
             newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][0]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][0])) / 2)
             newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][1]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][1])) / 2)
+            newTtoP[time]['LOCATION'][0] = newTtoP[time]['LOCATION'][0] / ((self.times_to_pos.get(time)['CONFIDENCE'] + other.times_to_pos.get(time)['CONFIDENCE']) / 2)
+            newTtoP[time]['LOCATION'][1] = newTtoP[time]['LOCATION'][1] / ((self.times_to_pos.get(time)['CONFIDENCE'] + other.times_to_pos.get(time)['CONFIDENCE']) / 2)
+            newTtoP[time]['LOCATION'][0] = newTtoP[time]['LOCATION'][0] * pointTot
+            newTtoP[time]['LOCATION'][1] = newTtoP[time]['LOCATION'][1] * pointTot
             newTtoP[time]['NUMPOINTS'] = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS']
         self.times_to_pos = newTtoP
 
