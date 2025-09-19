@@ -84,7 +84,7 @@ class Player:
                 self.times_to_pos[time]['LOCATION'] = points[i]
                 self.times_to_pos[time]['CONFIDENCE'] = 0.5 # Mark as interpolated 
 
-    def combine(self, other:Player):
+    def combine(self, other):
         """Combine two player objects into one player with updated confidence levels and positions."""
         if (self.name != other.name):
             raise Exception("Invalid combination.")
@@ -111,9 +111,9 @@ class Player:
             otherWeight = other.times_to_pos.get(time)['NUMPOINTS'] / pointTot
             newTtoP[time]['CONFIDENCE'] = (selfWeight * (self.times_to_pos.get(time)['CONFIDENCE']) + otherWeight * (other.times_to_pos.get(time)['CONFIDENCE'])) / 2
             newTtoP[time]['LOCATION'] = []
-            newTtoP[time]['LOCATION'][0] = (selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][0]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][0])) / 2
-            newTtoP[time]['LOCATION'][1] = (selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][1]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][1])) / 2
-            newTtoP[time]['NUMPOINTS'] = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS'] + 1
+            newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][0]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][0])) / 2)
+            newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][1]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][1])) / 2)
+            newTtoP[time]['NUMPOINTS'] = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS']
         self.times_to_pos = newTtoP
 
 
