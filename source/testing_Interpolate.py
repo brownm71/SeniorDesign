@@ -1,6 +1,6 @@
 import time
 from lib import *
-from fileRead import *
+from fileIO import *
 meta,teams = readJson("SeniorDesign/docs/singleTeamTest.json")
 # print(teams)
 teams : list[Team]

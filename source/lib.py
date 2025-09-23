@@ -82,12 +82,15 @@ class Player:
         for i, time in enumerate(sorted_times):
             if points[i] is not None and self.times_to_pos[time]['CONFIDENCE'] < 0:
                 self.times_to_pos[time]['LOCATION'] = points[i]
-                self.times_to_pos[time]['CONFIDENCE'] = 0.5 # Mark as interpolated 
+                self.times_to_pos[time]['CONFIDENCE'] = 0.1 # Mark as interpolated 
+                self.times_to_pos[time]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
     def combine(self, other):
         """Combine two player objects into one player with updated confidence levels and positions."""
+        if not isinstance(other,Player):
+            raise Exception('Must combine with a player.')
         if (self.name != other.name):
-            raise Exception("Invalid combination.")
+            raise Exception("Must combine players that are the same.")
         newTtoP :dict[float,dict[str, tuple|float]]= {}
         sharedTimes = set()
         for time in self.times_to_pos.keys():
