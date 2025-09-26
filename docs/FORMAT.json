@@ -7,63 +7,81 @@
     },
     "teams/groups" : {
             "TEAM 1":{
-                "player_1":{"TIME": {
+                "player_1":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_2":{"TIME": {
+                "player_2":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_3":{"TIME": {
+                "player_3":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 }
             },
             "TEAM 2":{
-                "player_1":{"TIME": {
+                "player_1":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_2":{"TIME": {
+                "player_2":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_3":{"TIME": {
+                "player_3":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 }
             },
             "TEAM 3":{
-                "player_1":{"TIME": {
+                "player_1":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_2":{"TIME": {
+                "player_2":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 },
-                "player_3":{"TIME": {
+                "player_3":{"TIME": [
+                    {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
                     "NUMPOINTS": 5
                     }
+                ]
                 }
             }
         }

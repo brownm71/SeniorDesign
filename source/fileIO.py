@@ -30,8 +30,8 @@ def writeJson(filepath:str,teams : list[Team],metadata : dict):
     with open(filepath,'w') as file:
         json.dump(resultDict,file,indent=4)
 
-def combine_files(filenames: tuple[str,str],output_filename : str,fill = False):
-    """Take in files of the same game, and will combine all data between them."""
+def combine_files(filenames: tuple[str,str],output_filename : str,fill = False,method = "Arithmetic",compress = False):
+    """Take in files of the same game, and will combine all data between them, using the given method."""
     # read in files.
     meta,teams = readJson(filenames[0])
     meta2,teams2 = readJson(filenames[1])
@@ -39,9 +39,17 @@ def combine_files(filenames: tuple[str,str],output_filename : str,fill = False):
     if meta['game_ID'] != meta2['game_ID']:
         raise Exception("Files do not share a Game ID.")
     
-    for i in range(len(teams)):
-        for j in range(len(teams[i].list_of_players)):
-            teams[i].list_of_players[j].combine(teams2[i].list_of_players[j])
+    if method =='Arithmetic':
+        for i in range(len(teams)):
+            for j in range(len(teams[i].list_of_players)):
+                teams[i].list_of_players[j].combine_arithmetic(teams2[i].list_of_players[j])
+    if method =="Geometric":
+        for i in range(len(teams)):
+            for j in range(len(teams[i].list_of_players)):
+                teams[i].list_of_players[j].combine_geometric(teams2[i].list_of_players[j])
+    
+    
+    
     if fill:
         # we need to interpolate.
         for team in teams:

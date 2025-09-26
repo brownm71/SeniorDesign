@@ -1,15 +1,21 @@
 class Player:
     """Represents a player throughout the game."""
     times_to_pos : dict[float,dict[str,tuple|float]] # (5,7)=x[1.2]['LOCATION']
-    
+    compressed : bool
+
     def __str__(self):
         return f'Player: {self.name}'
     def __repr__(self):
         return self.__str__()
     
-    def __init__(self,player_dict : dict = {},name = 'default'):
+    def __init__(self,player_dict : dict = None,name = 'default'):
         self.times_to_pos = {}
         self.name = name
+        self.compressed = False
+
+        if player_dict is None:
+            self.player_dict = {}
+
         for time in player_dict.keys():
             # Do things with time????
             self.times_to_pos[float(time)] = player_dict[time]
@@ -85,45 +91,77 @@ class Player:
                 self.times_to_pos[time]['CONFIDENCE'] = 0.1 # Mark as interpolated 
                 self.times_to_pos[time]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
-    def combine(self, other):
-        """Combine two player objects into one player with updated confidence levels and positions."""
+    def compress(self):
+        """Compress into a single point."""
+        if self.compressed:
+            return
+        #TODO
+
+    def combine_arithmetic(self, other):
+        """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
         if (self.name != other.name):
             raise Exception("Must combine players that are the same.")
-        newTtoP :dict[float,dict[str, tuple|float]]= {}
-        sharedTimes = set()
-        for time in self.times_to_pos.keys():
-            sharedTimes.add(time)
-        for time in other.times_to_pos.keys():
-            sharedTimes.add(time)
+        newTtoP :dict[float,list[dict[str, tuple|float]]]= {}
         
+        shared_times = set()
+        for time in self.times_to_pos.keys():
+            shared_times.add(time)
+        for time in other.times_to_pos.keys():
+            shared_times.add(time)
+        
+        # check if either needs to be compressed:
+        for time in shared_times:
+            if len(self.times_to_pos.get(time,[])) > 1:
+                # self needs to be commpressed.
+                self.compress()
+            if len(other.times_to_pos.get(time,[])) > 1:
+                # other needs to be commpressed.
+                other.compress()
+
+
+
         # sharedTimes contains all unique time values
-        for time in sharedTimes:
-            currentData = self.times_to_pos.get(time)
-            newData = other.times_to_pos.get(time)
-            if (currentData is None):
-                newTtoP[time] = newData
+        for time in shared_times:
+            current_data = self.times_to_pos.get(time)[0]
+            new_data = other.times_to_pos.get(time)[0]
+            if (current_data is None):
+                newTtoP[time] = new_data
                 continue
-            elif (newData is None):
-                newTtoP[time] = currentData
+            elif (new_data is None):
+                newTtoP[time] = current_data
                 continue
-            newTtoP[time] = dict()
-            pointTot = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS']
-            selfWeight = self.times_to_pos.get(time)['NUMPOINTS'] / pointTot
-            otherWeight = other.times_to_pos.get(time)['NUMPOINTS'] / pointTot
-            newTtoP[time]['CONFIDENCE'] = (selfWeight * (self.times_to_pos.get(time)['CONFIDENCE']) + otherWeight * (other.times_to_pos.get(time)['CONFIDENCE'])) / 2
-            newTtoP[time]['LOCATION'] = []
-            newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][0]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][0])) / 2)
-            newTtoP[time]['LOCATION'].append((selfWeight * self.times_to_pos.get(time)['CONFIDENCE'] * (self.times_to_pos.get(time)['LOCATION'][1]) + otherWeight * other.times_to_pos.get(time)['CONFIDENCE'] * (other.times_to_pos.get(time)['LOCATION'][1])) / 2)
-            newTtoP[time]['LOCATION'][0] = newTtoP[time]['LOCATION'][0] / ((self.times_to_pos.get(time)['CONFIDENCE'] + other.times_to_pos.get(time)['CONFIDENCE']) / 2)
-            newTtoP[time]['LOCATION'][1] = newTtoP[time]['LOCATION'][1] / ((self.times_to_pos.get(time)['CONFIDENCE'] + other.times_to_pos.get(time)['CONFIDENCE']) / 2)
-            newTtoP[time]['LOCATION'][0] = newTtoP[time]['LOCATION'][0] * pointTot
-            newTtoP[time]['LOCATION'][1] = newTtoP[time]['LOCATION'][1] * pointTot
-            newTtoP[time]['NUMPOINTS'] = self.times_to_pos.get(time)['NUMPOINTS'] + other.times_to_pos.get(time)['NUMPOINTS']
+
+
+            newTtoP[time] = [{}]
+            total_points = self.times_to_pos.get(time)[0]['NUMPOINTS'] + other.times_to_pos.get(time)[0]['NUMPOINTS']
+            self_weight = self.times_to_pos.get(time)[0]['NUMPOINTS']
+            other_weight = other.times_to_pos.get(time)[0]['NUMPOINTS']
+
+            self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
+            other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
+
+            newTtoP[time][0]['CONFIDENCE'] = (self_weight * (self.times_to_pos.get(time)[0]['CONFIDENCE']) + other_weight * (other.times_to_pos.get(time)[0]['CONFIDENCE'])) /(2*total_points)
+            
+            self_weighted_location_x = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][0]
+            self_weighted_location_y = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][1]
+            other_weighted_location_x = other_weight * other_confidence * other.times_to_pos.get(time)[0]['LOCATION'][0]
+            other_weighted_location_y = other_weight * other_confidence * other.times_to_pos.get(time)[0]['LOCATION'][1]
+
+            new_x_location = ((self_weighted_location_x + other_weighted_location_x) / (self_confidence + other_confidence))
+            new_y_location = ((self_weighted_location_y + other_weighted_location_y) / (self_confidence + other_confidence))
+            
+            newTtoP[time][0]['LOCATION'] = []
+            newTtoP[time][0]['LOCATION'].append(new_x_location)
+            newTtoP[time][0]['LOCATION'].append(new_y_location)
+            
+            newTtoP[time][0]['NUMPOINTS'] = self.times_to_pos.get(time)[0]['NUMPOINTS'] + other.times_to_pos.get(time)[0]['NUMPOINTS']
         self.times_to_pos = newTtoP
 
-
+    def combine_geometric(self,other):
+        """Combine two players using a weighted Geometric average."""
+        pass
 class Team:
     """A List of Players"""
     list_of_players :list[Player]
@@ -147,3 +185,11 @@ class Team:
         for player in self.list_of_players:
             result[player.name] = player.toDict()
         return result
+    
+
+def weighted_geometric_avrg(values : list, weights : list) -> float:
+    val = 1 
+    for i in range(len(values)):
+        val = val * values[i]**(weights[i])
+    res = val**(1/sum(weights))
+    return res
