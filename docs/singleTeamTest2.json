@@ -8,21 +8,21 @@
     "teams/groups" : {
             "TEAM 1":{
                 "player_1":{
-                    "0": {
+                    "0": [{
                         "LOCATION": [1,1],
                         "CONFIDENCE": 0.9,
                         "NUMPOINTS":1
-                        },
-                    "1": {
+                        }],
+                    "1": [{
                         "LOCATION": [2,2],
                         "CONFIDENCE": 0.9,
                         "NUMPOINTS":1
-                        },
-                    "4": {
+                        }],
+                    "4": [{
                         "LOCATION": [0,0],
                         "CONFIDENCE": 0.5,
                         "NUMPOINTS":1
-                        }
+                        }]
                 }
             }
         }

@@ -92,10 +92,49 @@ class Player:
                 self.times_to_pos[time]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
     def compress(self):
-        """Compress into a single point."""
+        """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
         if self.compressed:
             return
-        #TODO
+
+        new_times_to_pos = {}
+        for time, data_points in self.times_to_pos.items(): # there is gerented to be a least one point.
+            if not isinstance(data_points, list) or len(data_points) <= 1:
+                new_times_to_pos[time] = data_points
+                continue
+
+            total_numpoints = sum(dp.get('NUMPOINTS', 1) for dp in data_points)
+
+            if total_numpoints == 0:
+                # Cannot determine weights, so just take the first point.
+                new_times_to_pos[time] = [data_points[0]]
+                continue
+
+            # Calculate the total weight for confidence and location averaging.
+            # This is the sum of (confidence * numpoints) for each data point.
+            total_confidence_weight = sum(dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
+
+            new_confidence = total_confidence_weight / total_numpoints
+
+            if total_confidence_weight == 0:
+                # If all confidences are 0, fall back to a simple average of locations.
+                num_data_points = len(data_points)
+                avg_x = sum(dp['LOCATION'][0] for dp in data_points) / num_data_points
+                avg_y = sum(dp['LOCATION'][1] for dp in data_points) / num_data_points
+                new_location = [avg_x, avg_y]
+            else:
+                # Calculate the weighted average of the location.
+                weighted_x = sum(dp['LOCATION'][0] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
+                weighted_y = sum(dp['LOCATION'][1] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
+                new_location = [weighted_x / total_confidence_weight, weighted_y / total_confidence_weight]
+
+            new_times_to_pos[time] = [{
+                'LOCATION': new_location,
+                'CONFIDENCE': new_confidence,
+                'NUMPOINTS': total_numpoints
+            }]
+        
+        self.times_to_pos = new_times_to_pos
+        self.compressed = True
 
     def combine_arithmetic(self, other):
         """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
@@ -124,8 +163,8 @@ class Player:
 
         # sharedTimes contains all unique time values
         for time in shared_times:
-            current_data = self.times_to_pos.get(time)[0]
-            new_data = other.times_to_pos.get(time)[0]
+            current_data = self.times_to_pos.get(time)
+            new_data = other.times_to_pos.get(time)
             if (current_data is None):
                 newTtoP[time] = new_data
                 continue
