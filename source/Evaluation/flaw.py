@@ -7,12 +7,25 @@ def remove_points(file : Teams_and_Meta,chance_to_remove:float) -> Teams_and_Met
             for time in player.times_to_pos.keys():
                 kept_points = []
                 for point in player.times_to_pos[time]:
-                    if random.random() < chance_to_remove:
+                    if random.random() < (chance_to_remove / 100.0):
                         kept_points.append(point)
                 player.times_to_pos[time] = kept_points
 
     return file
 
-def vary_points(file,max_amount_to_vary : float,chance_to_vary : float):
+def vary_points(file: Teams_and_Meta,max_amount_to_vary : float,chance_to_vary : float):
     """Go through each point and change it {chance_to_vary} % it a random amount up to the {max_amount_to_vary} """
-    pass
+    for team in file.teams:
+        for player in team.list_of_players:
+            for time in player.times_to_pos.keys():
+                for point in player.times_to_pos[time]:
+                    if random.random() < (chance_to_vary / 100.0):
+                        # vary the point
+                        location = point.get('LOCATION')
+                        if location and isinstance(location, list):
+                            new_location = []
+                            for coordinate in location:
+                                variation = random.uniform(-max_amount_to_vary, max_amount_to_vary)
+                                new_location.append(coordinate + variation)
+                            point['LOCATION'] = new_location
+    return file
