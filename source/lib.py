@@ -1,10 +1,11 @@
 class Player:
     """Represents a player throughout the game."""
-    times_to_pos : dict[float,dict[str,tuple|float]] # (5,7)=x[1.2]['LOCATION']
+    times_to_pos : dict[float,list[dict[str,tuple|float]]] # (5,7)=x[1.2]['LOCATION']
     compressed : bool
 
     def __str__(self):
         return f'Player: {self.name}'
+    
     def __repr__(self):
         return self.__str__()
     
@@ -201,6 +202,7 @@ class Player:
     def combine_geometric(self,other):
         """Combine two players using a weighted Geometric average."""
         pass
+
 class Team:
     """A List of Players"""
     list_of_players :list[Player]
@@ -208,6 +210,7 @@ class Team:
 
     def __str__(self):
         return f'{self.name} = {self.list_of_players}\n'
+    
     def __repr__(self):
         return self.__str__()
 
@@ -225,9 +228,15 @@ class Team:
             result[player.name] = player.toDict()
         return result
     
+class Teams_and_Meta:
+    teams : list[Team]
+    meta : dict
+    def __init__(self,teams,meta):
+        self.teams = teams
+        self.meta = meta
 
 def weighted_geometric_avrg(values : list, weights : list) -> float:
-    val = 1 
+    val = 1
     for i in range(len(values)):
         val = val * values[i]**(weights[i])
     res = val**(1/sum(weights))

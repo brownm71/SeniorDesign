@@ -1,9 +1,9 @@
 import json,os,time
-from lib import Player,Team
+from lib import Player,Team,Teams_and_Meta
 
 def readJson(filename: str):
-    """Read in a Json file, and return its 
-    metadata and a list of teams."""
+    """Read in a Json file, and return a  
+    team_and_meta object."""
 
     with open(filename,'r') as f:
         json_dict : dict = json.load(f)
@@ -16,15 +16,15 @@ def readJson(filename: str):
             t.add(Player(teams_dict[team_name][player_name],player_name)) # get and add player to Team.
         teams.append(t)
     
-    return json_dict['metadata'] , teams
+    return Teams_and_Meta(teams,json_dict['metadata'])
 
-def writeJson(filepath:str,teams : list[Team],metadata : dict):
+def writeJson(filepath:str,fileformat : Teams_and_Meta):
     """Takes in teams, and metadata, and creates a new json
     or overwrites and existing file."""
     resultDict = {}
-    resultDict['metadata'] = metadata
+    resultDict['metadata'] = fileformat.meta
     teamDict = {}
-    for team in teams:
+    for team in fileformat.teams:
         teamDict[team.name] = team.toDict()
     resultDict['teams/groups'] = teamDict
     with open(filepath,'w') as file:
@@ -33,42 +33,40 @@ def writeJson(filepath:str,teams : list[Team],metadata : dict):
 def combine_files(filenames: tuple[str,str],output_filename : str,fill = False,method = "Arithmetic",compress = False):
     """Take in files of the same game, and will combine all data between them, using the given method."""
     # read in files.
-    meta,teams = readJson(filenames[0])
-    meta2,teams2 = readJson(filenames[1])
+    file1 = readJson(filenames[0])
+    file2 = readJson(filenames[1])
     # TODO maybe compare meta to be sure they should be combined.
-    if meta['game_ID'] != meta2['game_ID']:
+    if file1.meta['game_ID'] != file2.meta['game_ID']:
         raise Exception("Files do not share a Game ID.")
     
     if method =='Arithmetic':
-        for i in range(len(teams)):
-            for j in range(len(teams[i].list_of_players)):
-                teams[i].list_of_players[j].combine_arithmetic(teams2[i].list_of_players[j])
+        for i in range(len(file1.teams)):
+            for j in range(len(file1.teams[i].list_of_players)):
+                file1.teams[i].list_of_players[j].combine_arithmetic(file2.teams[i].list_of_players[j])
     if method =="Geometric":
-        for i in range(len(teams)):
-            for j in range(len(teams[i].list_of_players)):
-                teams[i].list_of_players[j].combine_geometric(teams2[i].list_of_players[j])
+        for i in range(len(file1.teams)):
+            for j in range(len(file1.teams[i].list_of_players)):
+                file1.teams[i].list_of_players[j].combine_geometric(file2.teams[i].list_of_players[j])
     
     
     
     if fill:
         # we need to interpolate.
-        for team in teams:
+        for team in file1.teams:
             for player in team.list_of_players:
-                player.basicInterpolateFill(float(meta['time_step']))
+                player.basicInterpolateFill(float(file1.meta['time_step']))
 
-    meta['date'] = f'{time.localtime()[1]}/{time.localtime()[2]}/{time.localtime()[0]}' # Cursed way to change the metaData Time
+    file1.meta['date'] = f'{time.localtime()[1]}/{time.localtime()[2]}/{time.localtime()[0]}' # Cursed way to change the metaData Time
     # print(meta)
 
-    writeJson(output_filename,teams,meta)
+    writeJson(output_filename,file1)
 
 
 
 if __name__ == '__main__':
     # testing IO
     filename = "SeniorDesign/docs/singleTeamTest.json"
-    metaData,teams = readJson(filename)
-    print(metaData)
-    print(teams)
+    file1 = readJson(filename)
 
     fileOutName = 'TestOut.json'
-    writeJson(fileOutName,teams,metaData)
+    writeJson(fileOutName,file1)
