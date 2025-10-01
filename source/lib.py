@@ -1,3 +1,4 @@
+import copy
 class Player:
     """Represents a player throughout the game."""
     times_to_pos : dict[float,list[dict[str,tuple|float]]] # (5,7)=x[1.2]['LOCATION']
@@ -27,7 +28,7 @@ class Player:
             # do things with time??
             result[time] = self.times_to_pos[time]
         return result
-    
+
     def basicInterpolateFill(self, timestep = 1):
         """Take all the points, and fill in missing ones using Interpolation."""
         # assumes Initial positions are accurate and there.
@@ -235,6 +236,15 @@ class Teams_and_Meta:
         self.teams = teams
         self.meta = meta
 
+    def copy(self):
+        """Create a deep copy of the file."""
+        res_teams = []
+        for team in self.teams:
+            res_teams.append(copy.deepcopy(team))
+        newMeta = self.meta.copy() # this should be fine, as it is only stores immutables
+        res = Teams_and_Meta(res_teams,newMeta)
+        return res
+    
 def weighted_geometric_avrg(values : list, weights : list) -> float:
     val = 1
     for i in range(len(values)):
