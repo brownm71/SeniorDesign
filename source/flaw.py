@@ -1,4 +1,7 @@
 import random
+
+random.seed(42)
+
 from lib import *
 def remove_points(file : Teams_and_Meta,chance_to_remove:float) -> Teams_and_Meta:
     """This will go through each point of each player on each team and remove them {chance_to_remove}% of the time."""
@@ -42,11 +45,46 @@ def create_flawed(file :Teams_and_Meta,chance_of_missing_points = None,max_vary_
         file = vary_points(file, max_vary_amount, chance_to_vary, confidence_multiplier)
     return file
 
+def evaluate(perfect_file: Teams_and_Meta,constructed_file: Teams_and_Meta,method = sum):
+    """Takes a perfect_file and calculates the difference between the constructed_file."""
+    diff = []
+    for i in range(len(perfect_file.teams)):
+        # compare number of players on team  
+        if len(perfect_file.teams[i].list_of_players) != len(constructed_file.teams[i].list_of_players):
+            raise Exception('Missing player')
+        for j in range(len(perfect_file.teams[i].list_of_players)):
+            
+            pp = (perfect_file.teams[i].list_of_players[j])
+            cp = (constructed_file.teams[i].list_of_players[j])
+            for time in pp.times_to_pos.keys():
+                px,py = pp.times_to_pos[time][0]['LOCATION']
+                if cp.times_to_pos[time]:
+                    cx,cy = cp.times_to_pos[time][0].get('LOCATION',[0,0])
+                else:
+                    cx,cy = -1000,-1000
+                diff.append((px - cx) + (py - cy))
 
+    return method(diff)
+
+def abs_add(itter):
+        total = 0
+        for i in itter:
+            total += abs(i)
+        return total
+    
 
 if __name__ == "__main__":
     import fileIO
-    file = fileIO.readJson(r"Golden.json")
-    file2 = create_flawed(file,chance_of_missing_points=100,max_vary_amount=1.5,chance_to_vary=100, confidence_multiplier=0.25)
-    fileIO.writeJson('test.json',file2)
-    fileIO.writeJson('real.json',file)
+    file = fileIO.readJson(r"SeniorDesign\docs\singleTeamTest.json")
+    file2 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=.8)
+    file3 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=0.8)
+    file4 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=0.8)
+
+    file2.combine(file3)
+    file2.combine(file4)
+
+    file.commpress()
+    # fileIO.writeJson('test.json',file2)
+    # fileIO.writeJson('real.json',file)
+    x = evaluate(file,file2,abs_add)
+    print(x)

@@ -28,6 +28,28 @@
                         "CONFIDENCE": 0.25,
                         "NUMPOINTS":1
                         }]
+                },
+                "player_2":{
+                    "0": [{
+                        "LOCATION": [0,0],
+                        "CONFIDENCE": 0.9,
+                        "NUMPOINTS":1
+                        },
+                        {
+                        "LOCATION": [2,2],
+                        "CONFIDENCE": 0.1,
+                        "NUMPOINTS":1
+                        }],
+                    "2": [{
+                        "LOCATION": [2,2],
+                        "CONFIDENCE": 0.9,
+                        "NUMPOINTS":1
+                        }],
+                    "4": [{
+                        "LOCATION": [4,4],
+                        "CONFIDENCE": 0.25,
+                        "NUMPOINTS":1
+                        }]
                 }
             }
         }

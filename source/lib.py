@@ -245,6 +245,31 @@ class Teams_and_Meta:
         res = Teams_and_Meta(res_teams,newMeta)
         return res
     
+    def combine(self,other,method = 'Arithmetic',fill = False):
+        if self.meta['game_ID'] != other.meta['game_ID']:
+            raise Exception("Files do not share a Game ID.")
+        
+        if method =='Arithmetic':
+            for i in range(len(self.teams)):
+                for j in range(len(self.teams[i].list_of_players)):
+                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j])
+        if method =="Geometric":
+            for i in range(len(self.teams)):
+                for j in range(len(self.teams[i].list_of_players)):
+                    self.teams[i].list_of_players[j].combine_geometric(other.teams[i].list_of_players[j])
+        
+        
+        
+        if fill:
+            # we need to interpolate.
+            for team in self.teams:
+                for player in team.list_of_players:
+                    player.basicInterpolateFill(float(self.meta['time_step']))
+
+    def compress(self):
+        # TODO
+        pass
+
 def weighted_geometric_avrg(values : list, weights : list) -> float:
     val = 1
     for i in range(len(values)):
