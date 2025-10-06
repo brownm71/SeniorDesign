@@ -36,7 +36,7 @@ def vary_points(file: Teams_and_Meta,max_amount_to_vary : float,chance_to_vary :
                                 point['CONFIDENCE'] = round(point['CONFIDENCE'],4) # to make the values more readable.
     return file
 
-def create_flawed(file :Teams_and_Meta,chance_of_missing_points = None,max_vary_amount=None,chance_to_vary=None, confidence_multiplier=1.0):
+def create_flawed(file : Teams_and_Meta,chance_of_missing_points = None,max_vary_amount=None,chance_to_vary=None, confidence_multiplier=1.0):
     file = file.copy()
     
     if chance_of_missing_points is not None:
@@ -48,6 +48,7 @@ def create_flawed(file :Teams_and_Meta,chance_of_missing_points = None,max_vary_
 def evaluate(perfect_file: Teams_and_Meta,constructed_file: Teams_and_Meta,method = sum):
     """Takes a perfect_file and calculates the difference between the constructed_file."""
     diff = []
+    missing_times = []
     for i in range(len(perfect_file.teams)):
         # compare number of players on team  
         if len(perfect_file.teams[i].list_of_players) != len(constructed_file.teams[i].list_of_players):
@@ -58,13 +59,15 @@ def evaluate(perfect_file: Teams_and_Meta,constructed_file: Teams_and_Meta,metho
             cp = (constructed_file.teams[i].list_of_players[j])
             for time in pp.times_to_pos.keys():
                 px,py = pp.times_to_pos[time][0]['LOCATION']
-                if cp.times_to_pos[time]:
+                if cp.times_to_pos[time] is not None and len(cp.times_to_pos[time])!=0:
                     cx,cy = cp.times_to_pos[time][0].get('LOCATION',[0,0])
                 else:
-                    cx,cy = -1000,-1000
+                    missing_times.append((time,pp))
+                    cx = px
+                    cy = py
                 diff.append((px - cx) + (py - cy))
 
-    return method(diff)
+    return method(diff),missing_times
 
 def abs_add(itter):
         total = 0
@@ -76,14 +79,17 @@ def abs_add(itter):
 if __name__ == "__main__":
     import fileIO
     file = fileIO.readJson(r"SeniorDesign\docs\singleTeamTest.json")
-    file2 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=.8)
-    file3 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=0.8)
-    file4 = create_flawed(file,chance_of_missing_points=0,max_vary_amount=1.5,chance_to_vary=100,confidence_multiplier=0.8)
+    file2 = create_flawed(file,chance_of_missing_points=100,max_vary_amount=1.5,chance_to_vary=50,confidence_multiplier=0.8)
+    file3 = create_flawed(file,chance_of_missing_points=75,max_vary_amount=1.5,chance_to_vary=50,confidence_multiplier=0.8)
+    file4 = create_flawed(file,chance_of_missing_points=75,max_vary_amount=1.5,chance_to_vary=50,confidence_multiplier=0.8)
 
     file2.combine(file3)
     file2.combine(file4)
 
-    file.commpress()
+    file.compress() # this is the final step
+    file2.compress()
+    # file2.interpolate() # this currently is broken # TODO
+    fileIO.writeJson('t.json',file2)
     # fileIO.writeJson('test.json',file2)
     # fileIO.writeJson('real.json',file)
     x = evaluate(file,file2,abs_add)

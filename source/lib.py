@@ -41,19 +41,22 @@ class Player:
         while current_time <= end_time:
             if current_time not in self.times_to_pos:
                 # Add a placeholder for the missing time
-                self.times_to_pos[current_time] = {'LOCATION': None, 'CONFIDENCE': -1.0}
+                self.times_to_pos[current_time] = [{'LOCATION': None, 'CONFIDENCE': -1.0}]
             current_time += timestep
 
         # make sure the times are sorted.
         sorted_times = sorted(self.times_to_pos.keys())
         points = []
         for time in sorted_times:
-            confidence = self.times_to_pos[time]['CONFIDENCE']
-            if confidence < 0:
-                # this is a point to fill in.
-                points.append(None)
+            if len(self.times_to_pos[time]) !=0:
+                confidence = self.times_to_pos[time][0]['CONFIDENCE']
+                if confidence < 0:
+                    # this is a point to fill in.
+                    points.append(None)
+                else:
+                    points.append(self.times_to_pos[time][0]['LOCATION'])
             else:
-                points.append(self.times_to_pos[time]['LOCATION'])
+                points.append(None) # this is a point to fill in
         # we have collected the points, now we fill in the gaps
         for i in range(len(points)):
             if points[i] is None:
@@ -88,10 +91,10 @@ class Player:
 
         # Now we update the original dictionary with the interpolated points
         for i, time in enumerate(sorted_times):
-            if points[i] is not None and self.times_to_pos[time]['CONFIDENCE'] < 0:
-                self.times_to_pos[time]['LOCATION'] = points[i]
-                self.times_to_pos[time]['CONFIDENCE'] = 0.1 # Mark as interpolated 
-                self.times_to_pos[time]['NUMPOINTS'] = 0 # TODO What to do here?? 
+            if points[i] is not None and self.times_to_pos[time][0]['CONFIDENCE'] < 0:
+                self.times_to_pos[time][0]['LOCATION'] = points[i]
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
+                self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
     def compress(self):
         """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
@@ -167,15 +170,16 @@ class Player:
         for time in shared_times:
             current_data = self.times_to_pos.get(time)
             new_data = other.times_to_pos.get(time)
-            if (current_data is None):
+            if (current_data is None or len(current_data)==0):
                 newTtoP[time] = new_data
                 continue
-            elif (new_data is None):
+            elif (new_data is None or len(new_data)==0):
                 newTtoP[time] = current_data
                 continue
 
 
             newTtoP[time] = [{}]
+
             total_points = self.times_to_pos.get(time)[0]['NUMPOINTS'] + other.times_to_pos.get(time)[0]['NUMPOINTS']
             self_weight = self.times_to_pos.get(time)[0]['NUMPOINTS']
             other_weight = other.times_to_pos.get(time)[0]['NUMPOINTS']
@@ -267,8 +271,15 @@ class Teams_and_Meta:
                     player.basicInterpolateFill(float(self.meta['time_step']))
 
     def compress(self):
-        # TODO
-        pass
+        """This will combine all datapoints in every player to one for each time."""
+        for team in self.teams:
+            for player in team.list_of_players:
+                player.compress() # this is using an arithmetic weighted average.
+    
+    def interpolate(self):
+        for team in self.teams:
+            for player in team.list_of_players:
+                player.basicInterpolateFill(float(self.meta['time_step']))
 
 def weighted_geometric_avrg(values : list, weights : list) -> float:
     val = 1
