@@ -1,4 +1,5 @@
 import copy
+import math
 class Player:
     """Represents a player throughout the game."""
     times_to_pos : dict[float,list[dict[str,tuple|float]]] # (5,7)=x[1.2]['LOCATION']
@@ -141,7 +142,7 @@ class Player:
         self.times_to_pos = new_times_to_pos
         self.compressed = True
 
-    def combine_arithmetic(self, other):
+    def combine_arithmetic(self, other,allowable_distance = 0):
         """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
@@ -187,15 +188,25 @@ class Player:
             self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
             other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
 
-            newTtoP[time][0]['CONFIDENCE'] = (self_weight * (self.times_to_pos.get(time)[0]['CONFIDENCE']) + other_weight * (other.times_to_pos.get(time)[0]['CONFIDENCE'])) /(2*total_points)
+            # check if in the allowable_distance
+            dist_comp = allowable_distance*allowable_distance
+            dist = (self.times_to_pos.get(time)[0]["LOCATION"][0]-other.times_to_pos.get(time)[0]["LOCATION"][0])**2 + (self.times_to_pos.get(time)[0]["LOCATION"][1]-other.times_to_pos.get(time)[0]["LOCATION"][1])**2
+
+            if dist <= dist_comp:
+                # we increase confindence.
+                new_confidence = (self_confidence + other_confidence + 1) / 3
+            else:
+                new_confidence = (self_weight * (self.times_to_pos.get(time)[0]['CONFIDENCE']) + other_weight * (other.times_to_pos.get(time)[0]['CONFIDENCE'])) /(2*total_points)
             
+            newTtoP[time][0]['CONFIDENCE'] = new_confidence
+
             self_weighted_location_x = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][0]
             self_weighted_location_y = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][1]
             other_weighted_location_x = other_weight * other_confidence * other.times_to_pos.get(time)[0]['LOCATION'][0]
             other_weighted_location_y = other_weight * other_confidence * other.times_to_pos.get(time)[0]['LOCATION'][1]
 
-            new_x_location = ((self_weighted_location_x + other_weighted_location_x) / (self_confidence + other_confidence))
-            new_y_location = ((self_weighted_location_y + other_weighted_location_y) / (self_confidence + other_confidence))
+            new_x_location = ((self_weighted_location_x + other_weighted_location_x) / (self_confidence*self_weight + other_confidence*other_weight))
+            new_y_location = ((self_weighted_location_y + other_weighted_location_y) / (self_confidence*self_weight + other_confidence*other_weight))
             
             newTtoP[time][0]['LOCATION'] = []
             newTtoP[time][0]['LOCATION'].append(new_x_location)
@@ -256,7 +267,7 @@ class Teams_and_Meta:
         if method =='Arithmetic':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
-                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j])
+                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j],self.meta['allowable_distance'])
         if method =="Geometric":
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):

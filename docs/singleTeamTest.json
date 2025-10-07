@@ -3,7 +3,8 @@
         "version":0.0,
         "game_ID" : "its a game!",
         "date" : "9/12/25",
-        "time_step" : "1"
+        "time_step" : "1",
+        "allowable_distance" : 90
     },
     "teams/groups" : {
             "TEAM 1":{
