@@ -103,7 +103,7 @@ class Player:
             return
 
         new_times_to_pos = {}
-        for time, data_points in self.times_to_pos.items(): # there is gerented to be a least one point.
+        for time, data_points in self.times_to_pos.items(): # there is garaunteed to be a least one point.
             if not isinstance(data_points, list) or len(data_points) <= 1:
                 new_times_to_pos[time] = data_points
                 continue
@@ -193,16 +193,12 @@ class Player:
 
             self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
             other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
-
-            # check if in the allowable_distance
-            dist_comp = allowable_distance*allowable_distance
-            dist = (self.times_to_pos.get(time)[0]["LOCATION"][0]-other.times_to_pos.get(time)[0]["LOCATION"][0])**2 + (self.times_to_pos.get(time)[0]["LOCATION"][1]-other.times_to_pos.get(time)[0]["LOCATION"][1])**2
-
-            if dist <= dist_comp:
-                # we increase confindence.
-                new_confidence = (self_confidence + other_confidence + 1) / 3
+            similarity = inner_product(self.times_to_pos.get(time)[0]['LOCATION'], other.times_to_pos.get(time)[0]['LOCATION'])
+            if (similarity < 0.5):
+                new_confidence = ((self_confidence + other_confidence) / 2) * (similarity / 0.5) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
             else:
-                new_confidence = (self_weight * (self.times_to_pos.get(time)[0]['CONFIDENCE']) + other_weight * (other.times_to_pos.get(time)[0]['CONFIDENCE'])) /(2*total_points)
+                new_confidence = ((self_confidence + other_confidence + 1 + similarity) / (3 + similarity)) # Experimentally determine this effectiveness. Could scale higher.
+            
             
             newTtoP[time][0]['CONFIDENCE'] = new_confidence
 
@@ -304,3 +300,15 @@ def weighted_geometric_avrg(values : list, weights : list) -> float:
         val = val * values[i]**(weights[i])
     res = val**(1/sum(weights))
     return res
+
+def inner_product(pt1, pt2):
+        """Determine the similarity between two points using the inner product. 
+        Returns values between 0 and 1. A value greater than or equal to 0.5 is considered different."""
+        # Calculate angle
+        xdot = pt1[0] * pt2[0]
+        ydot = pt1[1] * pt2[1]
+        mgpt1 = math.sqrt(pt1[0]**2 + pt1[1]**2)
+        mgpt2 = math.sqrt(pt2[0]**2 + pt2[1]**2)
+        similarity = (xdot + ydot) / (mgpt1 * mgpt2)
+        similarity = round(similarity, 5)
+        return similarity

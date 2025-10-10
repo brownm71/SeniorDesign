@@ -25,7 +25,7 @@ for i in range(lines.__len__()):
         if (players[name] == "Mongolz"):
             if not Mongolz.get(name):
                 Mongolz[name] = {}
-            Mongolz[name][tick / 64] = [{
+            Mongolz[name][tick // 64] = [{
                 'LOCATION':[X,Y],
                 'CONFIDENCE':1,
                 'NUMPOINTS':1
@@ -33,7 +33,7 @@ for i in range(lines.__len__()):
         elif (players[name] == "Faze"):
             if not Faze.get(name):
                 Faze[name] = {}
-            Faze[name][tick / 64] = [{
+            Faze[name][tick // 64] = [{
                 'LOCATION':[X,Y],
                 'CONFIDENCE':1,
                 'NUMPOINTS':1
@@ -43,7 +43,7 @@ teamDict = {
     "Faze":Faze
 }
 topDict = {
-    "Metadata": {
+    "metadata": {
         "version":0.0,
         "game_ID" : "its a game!",
         "date" : "50/50/99",
