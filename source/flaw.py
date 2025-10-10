@@ -72,7 +72,7 @@ def evaluate(perfect_file: Teams_and_Meta,constructed_file: Teams_and_Meta,metho
 def abs_add(iterable):
         total = 0
         for i in iterable:
-            total += abs(i)
+            total += (abs(i))
         return total
     
 def create_reconstructed(file :Teams_and_Meta ,number_of_flawed : int,chance_of_missing_points = None,max_vary_amount=None,chance_to_vary=None, confidence_multiplier=1.0) -> Teams_and_Meta:
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     file.compress() # this is the final step
     file2.compress()
     # file2.interpolate() # this currently is broken # TODO
-    fileIO.writeJson('t.json',file2)
+    # fileIO.writeJson('t.json',file2)
     x = evaluate(file,file2,abs_add)
     print(x)
 
@@ -107,9 +107,10 @@ if __name__ == "__main__":
 
     for i in range(30):
         random.seed(42)
-        recon = create_reconstructed(file,i+1,0,8,100,.8)
-        recon.compress()
-        x = evaluate(file,recon)
+        recon = create_reconstructed(file,i+1,0,1.5,100,.8)
+        recon.compress(1)
+        x = evaluate(file,recon,abs_add)
         things.append(x[0])
 
+    print(things)
     fileIO.writeJson('t.json',recon)

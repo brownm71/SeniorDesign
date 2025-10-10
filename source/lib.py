@@ -97,7 +97,7 @@ class Player:
                 self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
-    def compress(self):
+    def compress(self,round_place = None):
         """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
         if self.compressed:
             return
@@ -132,6 +132,12 @@ class Player:
                 weighted_x = sum(dp['LOCATION'][0] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
                 weighted_y = sum(dp['LOCATION'][1] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
                 new_location = [weighted_x / total_confidence_weight, weighted_y / total_confidence_weight]
+
+            if round_place is not None:
+                ls = []
+                for l in new_location:
+                    ls.append(round(l,round_place))
+                new_location = ls
 
             new_times_to_pos[time] = [{
                 'LOCATION': new_location,
@@ -281,11 +287,11 @@ class Teams_and_Meta:
                 for player in team.list_of_players:
                     player.basicInterpolateFill(float(self.meta['time_step']))
 
-    def compress(self):
+    def compress(self,nplaces = None):
         """This will combine all datapoints in every player to one for each time."""
         for team in self.teams:
             for player in team.list_of_players:
-                player.compress() # this is using an arithmetic weighted average.
+                player.compress(nplaces) # this is using an arithmetic weighted average.
     
     def interpolate(self):
         for team in self.teams:
