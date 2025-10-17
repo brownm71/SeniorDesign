@@ -1,7 +1,6 @@
 import random
 
 random.seed(42)
-
 from lib import *
 def remove_points(file : Teams_and_Meta,chance_to_remove:float) -> Teams_and_Meta:
     """This will go through each point of each player on each team and remove them {chance_to_remove}% of the time."""
@@ -91,9 +90,9 @@ def create_reconstructed(file :Teams_and_Meta ,number_of_flawed : int,chance_of_
 if __name__ == "__main__":
     random.seed(42)
     import fileIO
-    file = fileIO.readJson(r"jimJson.json")
-    file.compress()
-    fileModified = create_reconstructed(file, 4, 0, 2, 100, .33)
+    file = fileIO.readJson(r"SeniorDesign\docs\singleTeamTest.json")
+    # file.compress()
+    fileModified = create_reconstructed(file, 40, 0, 2, 100, .33)
     err = evaluate(file, fileModified, avrg_d2)
     print(err)
     # file2.combine(file3)

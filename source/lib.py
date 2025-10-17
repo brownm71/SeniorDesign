@@ -120,6 +120,7 @@ class Player:
             total_confidence_weight = sum(dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
 
             new_confidence = total_confidence_weight / total_numpoints
+            print("Compressed")
 
             if total_confidence_weight == 0:
                 # If all confidences are 0, fall back to a simple average of locations.
@@ -166,9 +167,11 @@ class Player:
         for time in shared_times:
             if len(self.times_to_pos.get(time,[])) > 1:
                 # self needs to be commpressed.
+                print("selfCompress")
                 self.compress()
             if len(other.times_to_pos.get(time,[])) > 1:
                 # other needs to be commpressed.
+                print("otherCompress")
                 other.compress()
 
 
@@ -301,14 +304,4 @@ def weighted_geometric_avrg(values : list, weights : list) -> float:
     res = val**(1/sum(weights))
     return res
 
-def inner_product(pt1, pt2):
-        """Determine the similarity between two points using the inner product. 
-        Returns values between 0 and 1. A value greater than or equal to 0.5 is considered different."""
-        # Calculate angle
-        xdot = pt1[0] * pt2[0]
-        ydot = pt1[1] * pt2[1]
-        mgpt1 = math.sqrt(pt1[0]**2 + pt1[1]**2)
-        mgpt2 = math.sqrt(pt2[0]**2 + pt2[1]**2)
-        similarity = (xdot + ydot) / (mgpt1 * mgpt2)
-        similarity = round(similarity, 5)
-        return similarity
+
