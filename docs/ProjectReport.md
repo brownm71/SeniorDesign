@@ -16,13 +16,15 @@ The Spatio-Temporal File Format is a JSON formatted file structure as outlined i
 After the data sets are combined, points without data can be interpolated in the following supported manners:
 Linear Interpolation
 ## Supported Combinational Methods
+
 ### Weighted Arithmetic Mean
 #### Implementation
 Two STF are considered. At each time shared by the files, the following formula is applied:
-	
+    (P1*C1*D1+P2*C2*D2) / (C1 + C2)
 Where P1 is the total number of points considered to create the data point for STF 1, P2 is the total number of points considered to create the data point for STF 2, C1 is the confidence of the data point from STF 1, C2 is the confidence of the data point from STF 2, D1 is the x or y coordinate of the data point from STF 1, and D2 is the x or y coordinate of the data point from STF 2. This formula is run for each coordinate axis to build a new point.
+
 #### Motivation
-	A weighted arithmetic mean keeps a running average of input data points, allowing new data points to easily be weighted and blended together with previous readings. Data points are discarded after being considered, allowing for efficient use of storage. We weight each data point by the confidence and the ratio of points used to the total points between the two data sets. To calculate the new data point, we multiply the weighted result by the total number of points between the two data sets and divide by the average of the confidence. The formula in implementation above is a simplification of this process.
+A weighted arithmetic mean keeps a running average of input data points, allowing new data points to easily be weighted and blended together with previous readings. Data points are discarded after being considered, allowing for efficient use of storage. We weight each data point by the confidence and the ratio of points used to the total points between the two data sets. To calculate the new data point, we multiply the weighted result by the total number of points between the two data sets and divide by the average of the confidence. The formula in implementation above is a simplification of this process.
 
 #### Performance
 
@@ -65,10 +67,19 @@ Decided to change how we calculate confidence, instead relying on a process of t
 Process: If two points are similar (angle is greater than or equal to 0.5), we increase the confidence by 1 + (Similarity in the average). If the points are non-similar, we multiply the average by the similarity. This results in more fluctuation in confidence and will prevent our model from stagnating in a low confidence state.
 
 #### Note:
-Somehow include term that factors in “momentum” into our point calculations (Gradient Descent with Momentum)
+Somehow include term that factors in “momentum” into our point calculations (Gradient Descent with Momentum).
 
 #### Next week: 
-For the increase in confidence, take the higher confidence and add to it the remaining difference to 1, times the other confidence times the similarity
-Add some form of number of points weighting to the scaling of the confidences
+For the increase in confidence, take the higher confidence and add to it the remaining difference to 1, times the other confidence times the similarity.
+Add some form of number of points weighting to the scaling of the confidences.
 
 ### Week 8
+Working through various methods of determining/tracking similarity between points. Similarity will take into account magnitude, angle, and will have a norm of less than/equal to 1.
+
+Potential similarity calculations:
+- Inner Product: (dotproduct of pt1,pt2) / (maximum norm (either pt1 or pt2))^2
+- Dot Product 
+- Online Thing: (Dot product of X + Dot product of Y ) / (maximum norm (either pt1 or pt2))^2
+
+#### Potential branch - Variance / Sandard Deviation
+Switching to standard deviation calculation would require large amounts of refactoring in the codebase, and it would be valuable to branch the code for such an addition.
