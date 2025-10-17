@@ -38,6 +38,9 @@ Where P1 is the total number of points considered to create the data point for S
 
 ## Feature Set
 
+### Feature: apple
+
+### Feature: banana
 
 ## Weekly Work Log
 
@@ -60,9 +63,9 @@ Figuring out how to implement the overall “error” present between all points
 Decided to change how we calculate confidence, instead relying on a process of treating points as vectors and calculating the angle between them to determine similarity. 
 Process: If two points are similar (angle is greater than or equal to 0.5), we increase the confidence by 1 + (Similarity in the average). If the points are non-similar, we multiply the average by the similarity. This results in more fluctuation in confidence and will prevent our model from stagnating in a low confidence state.
 
-Somehow include term that factors in “momentum” into our point calculations (Gradient Descent with Momentum)
-Next week: 
-For the increase in confidence, take the higher confidence and add to it the remaining difference to 1, times the other confidence times the similarity
-Add some form of number of points weighting to the scaling of the confidences
+    Somehow include term that factors in “momentum” into our point calculations (Gradient Descent with Momentum)
+    Next week: 
+    For the increase in confidence, take the higher confidence and add to it the remaining difference to 1, times the other confidence times the similarity
+    Add some form of number of points weighting to the scaling of the confidences
 
 ### Week 8
