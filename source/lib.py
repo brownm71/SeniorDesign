@@ -108,31 +108,38 @@ class Player:
                 new_times_to_pos[time] = data_points
                 continue
 
-            total_numpoints = sum(dp.get('NUMPOINTS', 1) for dp in data_points)
+            for i in range(len(data_points)-1):
+                # we costantly update the first point, untill it becomes the only point remaining.
+                self_weight = data_points[0]['NUMPOINTS']
+                other_weight = data_points[i+1]['NUMPOINTS']
 
-            if total_numpoints == 0:
-                # Cannot determine weights, so just take the first point.
-                new_times_to_pos[time] = [data_points[0]]
-                continue
+                self_con = data_points[0]['CONFIDENCE']
+                other_con = data_points[i+1]['CONFIDENCE']
+                similarity = similarity_calc(data_points[0], data_points[i+1])
+                if (similarity < 0.45):
+                    new_confidence = ((self_con + other_con) / 2) * (similarity / 0.45)
+                else:
+                    largest = max(self_con ,other_con)
+                    smallest = min(self_con,other_con)
+                    new_confidence = largest + (1-largest) * smallest
 
-            # Calculate the total weight for confidence and location averaging.
-            # This is the sum of (confidence * numpoints) for each data point.
-            total_confidence_weight = sum(dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
+                self_weighted_location_x = self_weight * self_con * data_points[0]['LOCATION'][0]
+                self_weighted_location_y = self_weight * self_con * data_points[0]['LOCATION'][1]
+                other_weighted_location_x = other_weight * other_con * data_points[i+1]['LOCATION'][0]
+                other_weighted_location_y = other_weight * other_con * data_points[i+1]['LOCATION'][0]
 
-            new_confidence = total_confidence_weight / total_numpoints
-            print("Compressed")
+                new_x_location = ((self_weighted_location_x + other_weighted_location_x) / (self_con*self_weight + other_con*other_weight))
+                new_y_location = ((self_weighted_location_y + other_weighted_location_y) / (self_con*self_weight + other_con*other_weight))
 
-            if total_confidence_weight == 0:
-                # If all confidences are 0, fall back to a simple average of locations.
-                num_data_points = len(data_points)
-                avg_x = sum(dp['LOCATION'][0] for dp in data_points) / num_data_points
-                avg_y = sum(dp['LOCATION'][1] for dp in data_points) / num_data_points
-                new_location = [avg_x, avg_y]
-            else:
-                # Calculate the weighted average of the location.
-                weighted_x = sum(dp['LOCATION'][0] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
-                weighted_y = sum(dp['LOCATION'][1] * dp['CONFIDENCE'] * dp.get('NUMPOINTS', 1) for dp in data_points)
-                new_location = [weighted_x / total_confidence_weight, weighted_y / total_confidence_weight]
+                new_location = [new_x_location,new_y_location]
+
+                total_numpoints = data_points[0]['NUMPOINTS'] + data_points[i+1]['NUMPOINTS']
+
+                # update for next itteration.
+                data_points[0]['LOCATION'] = new_location
+                data_points[0]['CONFIDENCE'] = new_confidence
+                data_points[0]['NUMPOINTS'] = total_numpoints
+
 
             if round_place is not None:
                 ls = []
@@ -140,11 +147,7 @@ class Player:
                     ls.append(round(l,round_place))
                 new_location = ls
 
-            new_times_to_pos[time] = [{
-                'LOCATION': new_location,
-                'CONFIDENCE': new_confidence,
-                'NUMPOINTS': total_numpoints
-            }]
+            new_times_to_pos[time] = [data_points[0]] # sets it to only be the first datapoint
         
         self.times_to_pos = new_times_to_pos
         self.compressed = True
@@ -167,11 +170,9 @@ class Player:
         for time in shared_times:
             if len(self.times_to_pos.get(time,[])) > 1:
                 # self needs to be commpressed.
-                print("selfCompress")
                 self.compress()
             if len(other.times_to_pos.get(time,[])) > 1:
                 # other needs to be commpressed.
-                print("otherCompress")
                 other.compress()
 
 
@@ -196,15 +197,16 @@ class Player:
 
             self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
             other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
-            similarity = inner_product(self.times_to_pos.get(time)[0]['LOCATION'], other.times_to_pos.get(time)[0]['LOCATION'])
-            if (similarity < 0.5):
-                new_confidence = ((self_confidence + other_confidence) / 2) * (similarity / 0.5) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
+            similarity = similarity_calc(self.times_to_pos.get(time)[0], other.times_to_pos.get(time)[0])
+            if (similarity < 0.45):
+                new_confidence = ((self_confidence + other_confidence) / 2) * (similarity / 0.45) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
             else:
-                new_confidence = ((self_confidence + other_confidence + 1 + similarity) / (3 + similarity)) # Experimentally determine this effectiveness. Could scale higher.
-            
+                largest = (max(self_confidence ,other_confidence))
+                smallest = min(self_confidence,other_confidence)
+                new_confidence = largest + (1-largest) * smallest
             
             newTtoP[time][0]['CONFIDENCE'] = new_confidence
-
+            
             self_weighted_location_x = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][0]
             self_weighted_location_y = self_weight * self_confidence * self.times_to_pos.get(time)[0]['LOCATION'][1]
             other_weighted_location_x = other_weight * other_confidence * other.times_to_pos.get(time)[0]['LOCATION'][0]
@@ -217,7 +219,7 @@ class Player:
             newTtoP[time][0]['LOCATION'].append(new_x_location)
             newTtoP[time][0]['LOCATION'].append(new_y_location)
             
-            newTtoP[time][0]['NUMPOINTS'] = self.times_to_pos.get(time)[0]['NUMPOINTS'] + other.times_to_pos.get(time)[0]['NUMPOINTS']
+            newTtoP[time][0]['NUMPOINTS'] = total_points
         self.times_to_pos = newTtoP
 
     def combine_geometric(self,other):
@@ -304,4 +306,12 @@ def weighted_geometric_avrg(values : list, weights : list) -> float:
     res = val**(1/sum(weights))
     return res
 
-
+def similarity_calc(m1:dict[str,tuple|float], m2:dict[str,tuple|float]):
+    pt1 = m1['LOCATION']
+    pt2 = m2['LOCATION']
+    xdot = pt1[0] * pt2[0]
+    ydot = pt1[1] * pt2[1]
+    dot_total = xdot + ydot
+    similarity = dot_total / max(math.sqrt(pt1[0]**2 + pt1[1]**2) , math.sqrt(pt2[0]**2 + pt2[1]**2) )**2
+    similarity = (similarity + 1) / 2 # Transforms from -1 to 1 into 0 to 1
+    return similarity
