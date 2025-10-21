@@ -35,6 +35,21 @@ def vary_points(file: Teams_and_Meta,max_amount_to_vary : float,chance_to_vary :
                                 point['CONFIDENCE'] = round(point['CONFIDENCE'],4) # to make the values more readable.
     return file
 
+def make_outlires(file : Teams_and_Meta,number_of_outlires_per_player : int,min_dev:float,max_dev:float):
+    """This will take a file, and choose a number of points to become outlires, replacing them with values that have been changed somewere between min_dev, and max_dev"""
+    for team in file.teams:
+        for player in team.list_of_players:
+            times = []
+            for time in player.times_to_pos.keys():
+                times.append(time)
+            outlire_times = (random.choices(times,k=number_of_outlires_per_player))
+            for time in outlire_times:
+                sign = random.choice([-1,1])
+                player.times_to_pos[time][0]['LOCATION'][0] += (sign)*(random.randint(min_dev,max_dev))
+                sign = random.choice([-1,1])
+                player.times_to_pos[time][0]['LOCATION'][1] += (sign)*(random.randint(min_dev,max_dev))
+    return file
+
 def create_flawed(file : Teams_and_Meta,chance_of_missing_points = None,max_vary_amount=None,chance_to_vary=None, confidence_multiplier=1.0):
     file = file.copy()
     
@@ -91,30 +106,4 @@ if __name__ == "__main__":
     random.seed(42)
     import fileIO
     file = fileIO.readJson(r"SeniorDesign\docs\singleTeamTest.json")
-    # file.compress()
-    fileModified = create_reconstructed(file, 40, 0, 2, 100, .33)
-    err = evaluate(file, fileModified, avrg_d2)
-    print(err)
-    # file2.combine(file3)
-    # file2.combine(file4)
-    # file.compress() # this is the final step
-    # file2.compress()
-    # # file2.interpolate() # this currently is broken # TODO
-    # # fileIO.writeJson('t.json',file2)
-    # x = evaluate(file,file2,abs_add)
-    # print(x)
-
-    
-
-    things = []
-
-
-    # for i in range(30):
-    #     random.seed(42)
-    #     recon = create_reconstructed(file,i+1,0,1.5,100,.8)
-    #     recon.compress(1)
-    #     x = evaluate(file,recon,abs_add)
-    #     things.append(x[0])
-
-    # print(things)
-    # fileIO.writeJson('t.json',recon)
+    print(evaluate(file,make_outlires(file.copy(),1,100,1000)))
