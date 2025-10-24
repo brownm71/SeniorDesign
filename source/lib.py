@@ -228,7 +228,8 @@ class Player:
             raise Exception('Must combine with a player.')
         if (self.name != other.name):
             raise Exception("Must combine players that are the same.")
-        newTtoP :dict[float,list[dict[str, tuple|float]]]= {}
+        
+        newTtoP :dict[float,list[dict[str, tuple|float]]] = {}
         
         shared_times = set()
         for time in self.times_to_pos.keys():
@@ -241,16 +242,22 @@ class Player:
             weights  = []
             points_x = []
             points_y = []
-            for data in self.times_to_pos[time]:
+            for data in self.times_to_pos.get(time,[]):
                 points_x.append(data['LOCATION'][0])
                 points_y.append(data['LOCATION'][1])
-
+                weights.append(data['CONFIDENCE'])
+            
+            for data in other.times_to_pos.get(time,[]):
+                points_x.append(data['LOCATION'][0])
+                points_y.append(data['LOCATION'][1])
                 weights.append(data['CONFIDENCE'])
 
-            new_y = weighted_geometric_avrg(points_y)
-            new_x = weighted_geometric_avrg(points_x)
-            
-        pass
+            average = sum(weights) / len(weights)
+
+            new_y = weighted_geometric_avrg(points_y,weights)
+            new_x = weighted_geometric_avrg(points_x,weights)
+            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
+        self.times_to_pos = newTtoP
 
 class Team:
     """A List of Players"""
@@ -334,7 +341,7 @@ class Teams_and_Meta:
 
         for i in range(len(other.teams)):
             for j in range(len(other.teams[i].list_of_players)):
-                for time in list(other.teams[i].list_of_players[j].times_to_pos):
+                for time in (other.teams[i].list_of_players[j].times_to_pos.keys()):
                     for data in other.teams[i].list_of_players[j].times_to_pos[time]:
                         self.teams[i].list_of_players[j].times_to_pos.get(time,[]).append(data)
 
