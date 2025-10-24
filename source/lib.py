@@ -152,7 +152,7 @@ class Player:
         self.times_to_pos = new_times_to_pos
         self.compressed = True
 
-    def combine_arithmetic(self, other,allowable_distance = 0):
+    def combine_arithmetic(self, other):
         """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
@@ -224,6 +224,32 @@ class Player:
 
     def combine_geometric(self,other):
         """Combine two players using a weighted Geometric average."""
+        if not isinstance(other,Player):
+            raise Exception('Must combine with a player.')
+        if (self.name != other.name):
+            raise Exception("Must combine players that are the same.")
+        newTtoP :dict[float,list[dict[str, tuple|float]]]= {}
+        
+        shared_times = set()
+        for time in self.times_to_pos.keys():
+            shared_times.add(time)
+        for time in other.times_to_pos.keys():
+            shared_times.add(time)
+
+        # now go through every point in the given time and add it to a list, while also adding all of there weights to a different list.
+        for time in shared_times:
+            weights  = []
+            points_x = []
+            points_y = []
+            for data in self.times_to_pos[time]:
+                points_x.append(data['LOCATION'][0])
+                points_y.append(data['LOCATION'][1])
+
+                weights.append(data['CONFIDENCE'])
+
+            new_y = weighted_geometric_avrg(points_y)
+            new_x = weighted_geometric_avrg(points_x)
+            
         pass
 
 class Team:
@@ -298,6 +324,19 @@ class Teams_and_Meta:
         for team in self.teams:
             for player in team.list_of_players:
                 player.basicInterpolateFill(float(self.meta['time_step']))
+
+    def combine_historic(self,other):
+        """Combines two files maintaining all of there respective data in place."""
+        if not isinstance(other, Teams_and_Meta):
+            raise Exception('Cannot combine things that are not Team_and_Meta objects.')
+        if self.meta['game_ID'] != other.meta['game_ID']:
+            raise Exception("Game ID's must be the same!")
+
+        for i in range(len(other.teams)):
+            for j in range(len(other.teams[i].list_of_players)):
+                for time in list(other.teams[i].list_of_players[j].times_to_pos):
+                    for data in other.teams[i].list_of_players[j].times_to_pos[time]:
+                        self.teams[i].list_of_players[j].times_to_pos.get(time,[]).append(data)
 
 def weighted_geometric_avrg(values : list, weights : list) -> float:
     val = 1
