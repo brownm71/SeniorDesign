@@ -304,6 +304,11 @@ class Teams_and_Meta:
         if self.meta['game_ID'] != other.meta['game_ID']:
             raise Exception("Files do not share a Game ID.")
         
+        # Copy the teams for calculation of standard deviation from final point.
+        orig = self.copy()
+        orig_other = other.copy()
+        orig.combine_historic(orig_other)
+        
         if method =='Arithmetic':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
@@ -312,7 +317,7 @@ class Teams_and_Meta:
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
                     self.teams[i].list_of_players[j].combine_geometric(other.teams[i].list_of_players[j])
-        
+        self.fill_std_dev(orig)
         
         
         if fill:
@@ -320,6 +325,34 @@ class Teams_and_Meta:
             for team in self.teams:
                 for player in team.list_of_players:
                     player.basicInterpolateFill(float(self.meta['time_step']))
+
+    def fill_std_dev(self, past_self):
+        """Computes the standard deviation for each point for each player. Requires compressed input"""
+        for i in range(len(self.teams)):
+                for j in range(len(self.teams[i].list_of_players)):
+                    for time in self.teams[i].list_of_players[j].times_to_pos.keys():
+                        x_mean = self.teams[i].list_of_players[j].times_to_pos[time][0]['LOCATION'][0]
+                        y_mean = self.teams[i].list_of_players[j].times_to_pos[time][0]['LOCATION'][1]
+                        pointsX = []
+                        pointsY = []
+                        for pt in past_self.teams[i].list_of_players[j].times_to_pos[time]:
+                            pointsX.append(pt['LOCATION'][0]) 
+                            pointsY.append(pt['LOCATION'][1])
+                        x_std_dev = calc_standard_dev(pointsX, x_mean, len(pointsX))
+                        y_std_dev = calc_standard_dev(pointsY, y_mean, len(pointsY))
+                        # Take the largest standard deviation so it is a circle and not an oval
+                        std_dev = max(x_std_dev, y_std_dev)
+                        self.teams[i].list_of_players[j].times_to_pos[time][0]['SD'] = std_dev
+        self.calc_dataset_std_dev()
+        
+    def calc_dataset_std_dev(self):
+        """Calculate the standard deviation for the entire data set for easier readability. Requires a compressed data set where the standard deviations have already been calculated."""
+        sds = []
+        for i in range(len(self.teams)):
+                for j in range(len(self.teams[i].list_of_players)):
+                    for time in self.teams[i].list_of_players[j].times_to_pos.keys():                        
+                        sds.append(self.teams[i].list_of_players[j].times_to_pos[time][0]['SD'])
+        self.meta['net_standard_deviation'] = net_standard_deviation(sds, len(sds))
 
     def compress(self,nplaces = None):
         """This will combine all datapoints in every player to one for each time."""
@@ -361,3 +394,32 @@ def similarity_calc(m1:dict[str,tuple|float], m2:dict[str,tuple|float]):
     similarity = dot_total / max(math.sqrt(pt1[0]**2 + pt1[1]**2) , math.sqrt(pt2[0]**2 + pt2[1]**2) )**2
     similarity = (similarity + 1) / 2 # Transforms from -1 to 1 into 0 to 1
     return similarity
+
+def calc_standard_dev(points, mean, num_pts):
+  """
+  Calculates the standard deviation.
+  """
+  if num_pts == 0:
+    return 0.0 # Standard deviation is undefined or 0 for no data
+
+  # 1. Calculate the sum of squared differences from the mean
+  sum_squared_diff = 0
+  for point in points:
+    difference = point - mean
+    sum_squared_diff += difference ** 2
+
+  # 2. Calculate the variance (average of the squared differences)
+  variance = sum_squared_diff / num_pts
+
+  # 3. Calculate the standard deviation (square root of the variance)
+  std_dev = math.sqrt(variance)
+
+  return std_dev
+
+def net_standard_deviation(sds, num_sd):
+    """Calculate the RMS of the standard deviations to get a net standard deviation."""
+    squared_sum = 0
+    for sd in sds:
+        squared_sum = squared_sum + sd**2
+    squared_sum = squared_sum / num_sd
+    return math.sqrt(squared_sum)

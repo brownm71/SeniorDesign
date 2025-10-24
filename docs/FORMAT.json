@@ -1,10 +1,11 @@
 {
     "metadata":{
-        "version":0.0,
+        "version":1.0,
         "game_ID" : "its a game!",
         "date" : "50/50/99",
         "time_step" : "1",
-        "allowable_distance" : 0.5
+        "allowable_distance" : 0.5,
+        "net_standard_deviation" : 2
     },
     "teams/groups" : {
             "TEAM 1":{
@@ -12,7 +13,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -20,7 +22,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -28,7 +31,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 }
@@ -38,7 +42,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -46,7 +51,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -54,7 +60,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 }
@@ -64,7 +71,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -72,7 +80,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 },
@@ -80,7 +89,8 @@
                     {
                     "LOCATION": ["X","Y"],
                     "CONFIDENCE": 0.123,
-                    "NUMPOINTS": 5
+                    "NUMPOINTS": 5,
+                    "DEVIATION": 2
                     }
                 ]
                 }

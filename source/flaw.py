@@ -105,5 +105,5 @@ def create_reconstructed(file :Teams_and_Meta ,number_of_flawed : int,chance_of_
 if __name__ == "__main__":
     random.seed(42)
     import fileIO
-    file = fileIO.readJson(r"SeniorDesign\docs\singleTeamTest.json")
+    file = fileIO.readJson(r"docs\singleTeamTest.json")
     print(evaluate(file,make_outlires(file.copy(),1,100,1000)))
