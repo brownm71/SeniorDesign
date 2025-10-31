@@ -89,7 +89,7 @@ def abs_add(iterable):
             total += (abs(i))
         return total
 
-def avrg_d2(iterable):
+def true_div(iterable):
     """Calculates the average error. Divides by two since error is in x and y."""
     return abs_add(iterable) / (len(iterable) * 2)
     

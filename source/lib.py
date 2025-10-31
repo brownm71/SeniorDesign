@@ -116,12 +116,7 @@ class Player:
                 self_con = data_points[0]['CONFIDENCE']
                 other_con = data_points[i+1]['CONFIDENCE']
                 similarity = similarity_calc(data_points[0], data_points[i+1])
-                if (similarity < 0.45):
-                    new_confidence = ((self_con + other_con) / 2) * (similarity / 0.45)
-                else:
-                    largest = max(self_con ,other_con)
-                    smallest = min(self_con,other_con)
-                    new_confidence = largest + (1-largest) * smallest
+                new_confidence = update_confidence(self_con, other_con, similarity, total_numpoints)
 
                 self_weighted_location_x = self_weight * self_con * data_points[0]['LOCATION'][0]
                 self_weighted_location_y = self_weight * self_con * data_points[0]['LOCATION'][1]
@@ -198,12 +193,7 @@ class Player:
             self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
             other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
             similarity = similarity_calc(self.times_to_pos.get(time)[0], other.times_to_pos.get(time)[0])
-            if (similarity < 0.45):
-                new_confidence = ((self_confidence + other_confidence) / 2) * (similarity / 0.45) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
-            else:
-                largest = (max(self_confidence ,other_confidence))
-                smallest = min(self_confidence,other_confidence)
-                new_confidence = largest + (1-largest) * smallest
+            new_confidence = update_confidence(self_confidence, other_confidence, similarity, total_points)
             
             newTtoP[time][0]['CONFIDENCE'] = new_confidence
             
@@ -222,8 +212,9 @@ class Player:
             newTtoP[time][0]['NUMPOINTS'] = total_points
         self.times_to_pos = newTtoP
 
+    
     def combine_geometric(self,other):
-        """Combine two players using a weighted Geometric average."""
+        """Combine two players using a weighted Geometric average. All values must be positive for a sensible result."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
         if (self.name != other.name):
@@ -312,8 +303,8 @@ class Teams_and_Meta:
         if method =='Arithmetic':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
-                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j],self.meta['allowable_distance'])
-        if method =="Geometric":
+                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j])
+        if method =='Geometric':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
                     self.teams[i].list_of_players[j].combine_geometric(other.teams[i].list_of_players[j])
@@ -380,9 +371,13 @@ class Teams_and_Meta:
 
 def weighted_geometric_avrg(values : list, weights : list) -> float:
     val = 1
+    top_frac = 0
     for i in range(len(values)):
-        val = val * values[i]**(weights[i])
-    res = val**(1/sum(weights))
+        top_frac += math.log(abs(values[i])) * weights[i]
+    bot_frac = sum(weights)
+    res = math.exp(top_frac / bot_frac)
+    if (isinstance(res,complex)):
+        return (res.real**2 + res.imag**2)**0.5
     return res
 
 def similarity_calc(m1:dict[str,tuple|float], m2:dict[str,tuple|float]):
@@ -405,14 +400,14 @@ def calc_standard_dev(points, mean, num_pts):
   # 1. Calculate the sum of squared differences from the mean
   sum_squared_diff = 0
   for point in points:
-    difference = point - mean
-    sum_squared_diff += difference ** 2
+    difference = abs(point - mean)
+    sum_squared_diff += difference**2
 
   # 2. Calculate the variance (average of the squared differences)
   variance = sum_squared_diff / num_pts
 
   # 3. Calculate the standard deviation (square root of the variance)
-  std_dev = math.sqrt(variance)
+  std_dev = math.sqrt(abs(variance))
 
   return std_dev
 
@@ -423,3 +418,13 @@ def net_standard_deviation(sds, num_sd):
         squared_sum = squared_sum + sd**2
     squared_sum = squared_sum / num_sd
     return math.sqrt(squared_sum)
+
+def update_confidence(c1, c2, similarity, total_points):
+    if (similarity < 0.45):
+        new_confidence = ((c1 + c2) / 2) * (1/total_points) * (similarity / 0.45) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
+    else:
+        largest = (max(c1 ,c2))
+        smallest = min(c1,c2)
+        new_confidence = largest + (1/total_points) * (1-largest) * smallest
+
+    return new_confidence

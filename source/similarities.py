@@ -133,7 +133,7 @@ if __name__ == "__main__":
         for i in range(len(flawed_files)-1):
             test_combine(flawed_files[0], flawed_files[i+1], functionList[j])
         fileModified = flawed_files[0]
-        err = evaluate(file, fileModified, avrg_d2)
+        err = evaluate(file, fileModified, true_div)
         outputFiles.append(fileModified)
         results[j+1] = err
         print(f"{j+1} / {functionList.__len__()}")
