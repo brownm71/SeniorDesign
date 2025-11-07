@@ -31,7 +31,11 @@ def vary_points(file: Teams_and_Meta,max_amount_to_vary : float,chance_to_vary :
                                 new_location.append(round(coordinate + variation,5))
                             point['LOCATION'] = new_location
                             if 'CONFIDENCE' in point and isinstance(point['CONFIDENCE'], (int, float)):
-                                point['CONFIDENCE'] *= confidence_multiplier
+                                if not isinstance(confidence_multiplier,(float,int)):
+                                    point['CONFIDENCE'] *= confidence_multiplier()
+                                else:
+                                    point['CONFIDENCE'] *= confidence_multiplier
+                                
                                 point['CONFIDENCE'] = round(point['CONFIDENCE'],4) # to make the values more readable.
     return file
 
