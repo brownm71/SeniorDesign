@@ -19,7 +19,7 @@ def readJson(filename: str):
     return Teams_and_Meta(teams,json_dict['metadata'])
 
 def writeJson(filepath:str,fileformat : Teams_and_Meta):
-    """Takes in teams, and metadata, and creates a new json
+    """Takes in teams_and_metadata, and creates a new json
     or overwrites and existing file."""
     resultDict = {}
     resultDict['metadata'] = fileformat.meta

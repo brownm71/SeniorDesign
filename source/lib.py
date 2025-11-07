@@ -212,7 +212,6 @@ class Player:
             newTtoP[time][0]['NUMPOINTS'] = total_points
         self.times_to_pos = newTtoP
 
-    
     def combine_geometric(self,other):
         """Combine two players using a weighted Geometric average. All values must be positive for a sensible result."""
         if not isinstance(other,Player):
@@ -381,6 +380,22 @@ def weighted_geometric_avrg(values : list, weights : list) -> float:
     return res
 
 def similarity_calc(m1:dict[str,tuple|float], m2:dict[str,tuple|float]):
+    """
+    Calculates a similarity score between two points based on a modified cosine similarity.
+
+    This function treats the two input points as vectors from the origin. It computes
+    their dot product and divides it by the squared L2 norm (magnitude) of the
+    longer of the two vectors. This penalizes differences in both angle and magnitude.
+    The result is then scaled from a [-1, 1] range to a [0, 1] range, where 1
+    represents high similarity.
+
+    Args:
+        m1: A dictionary containing the first point's data, including a 'LOCATION' tuple.
+        m2: A dictionary containing the second point's data, including a 'LOCATION' tuple.
+
+    Returns:
+        A float between 0 and 1 representing the similarity score.
+    """
     pt1 = m1['LOCATION']
     pt2 = m2['LOCATION']
     xdot = pt1[0] * pt2[0]
@@ -413,11 +428,10 @@ def calc_standard_dev(points, mean, num_pts):
 
 def net_standard_deviation(sds, num_sd):
     """Calculate the RMS of the standard deviations to get a net standard deviation."""
-    squared_sum = 0
+    sd_sum = 0
     for sd in sds:
-        squared_sum = squared_sum + sd**2
-    squared_sum = squared_sum / num_sd
-    return math.sqrt(squared_sum)
+        sd_sum += sd
+    return sd_sum / len(sds)
 
 def update_confidence(c1, c2, similarity, total_points):
     if (similarity < 0.45):
