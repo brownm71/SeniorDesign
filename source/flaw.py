@@ -110,6 +110,20 @@ def create_reconstructed(file :Teams_and_Meta ,number_of_flawed : int,chance_of_
         flawed_files[0].combine(flawed_files[i+1])
     return flawed_files[0]
 
+def create_reconstructed_geometric(file :Teams_and_Meta ,number_of_flawed : int,chance_of_missing_points = None,max_vary_amount=None,chance_to_vary=None, confidence_multiplier=1.0) -> Teams_and_Meta:
+    """This function simulates a scenario where multiple sources provide noisy or incomplete
+    data for the same event. It takes an original `Teams_and_Meta` object, creates a
+    specified number of flawed copies using `create_flawed`, and then merges them all
+    into a single, reconstructed `Teams_and_Meta` object."""
+    flawed_files : list[Teams_and_Meta] = []
+    for i in range(number_of_flawed):
+        flaw = create_flawed(file,chance_of_missing_points,max_vary_amount,chance_to_vary,confidence_multiplier)
+        flawed_files.append(flaw)
+    for i in range(len(flawed_files)-2):
+        flawed_files[0].combine_historic(flawed_files[i+1])
+    flawed_files[0].combine(flawed_files[-1], 'Geometric')
+    return flawed_files[0]
+
 if __name__ == "__main__":
     random.seed(42)
     import fileIO

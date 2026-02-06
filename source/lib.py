@@ -97,6 +97,86 @@ class Player:
                 self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
+    def splineInterpolateFill(self, timestep = 1):
+        """Take all the points, and fill in missing ones using Spline Interpolation."""
+        # assumes Initial positions are accurate and there.
+
+        sorted_times = sorted(self.times_to_pos.keys())
+        start_time = float(sorted_times[0])
+        end_time = float(sorted_times[-1])
+
+        current_time = start_time
+        while current_time <= end_time:
+            if current_time not in self.times_to_pos:
+                # Add a placeholder for the missing time
+                self.times_to_pos[current_time] = [{'LOCATION': None, 'CONFIDENCE': -1.0}]
+            current_time += timestep
+
+        # make sure the times are sorted.
+        sorted_times = sorted(self.times_to_pos.keys())
+        points = []
+        for time in sorted_times:
+            if len(self.times_to_pos[time]) !=0:
+                confidence = self.times_to_pos[time][0]['CONFIDENCE']
+                if confidence < 0:
+                    # this is a point to fill in.
+                    points.append(None)
+                else:
+                    points.append(self.times_to_pos[time][0]['LOCATION'])
+            else:
+                points.append(None) # this is a point to fill in
+        # we have collected the points, now we fill in the gaps
+        for i in range(len(points)):
+            if points[i] is None:
+                # This is a point to fill in.
+                # find the closest point to the left.
+                left_index_1 = -1
+                for j in range(i - 1, -1, -1):
+                    if points[j] is not None:
+                        left_index_1 = j
+                        break
+                left_index_2 = -1
+                if points[left_index_1 -1] is not None:
+                    left_index_2 = left_index_1 - 1
+                # find the closest point to the right.
+                right_index_1 = -1
+                for j in range(i + 1, len(points)):
+                    if points[j] is not None:
+                        right_index_1 = j
+                        break
+                right_index_2 = -1
+                if points[right_index_1 + 1] is not None:
+                    right_index_2 = right_index_1 + 1
+                # if we have two points on both sides, we can interpolate
+                if left_index_1 != -1 and left_index_2 != -1 and right_index_1 != -1 and right_index_2 != -1:
+                    left_point_1 = points[left_index_1]
+                    right_point_1 = points[right_index_1]
+                    left_point_2 = points[left_index_2]
+                    right_point_2 = points[right_index_2]
+
+                    total_steps = float(right_index_1 - left_index_1)
+                    current_step = float(i - left_index_1)
+                    if isinstance(left_point_1, list) and isinstance(right_point_1, list):
+                        interpolated_point = []
+                        for dim in range(len(left_point_1)): # so that any number of dimentions can be used.
+                            val = catmull_formula(left_point_1, left_point_2, right_point_1, right_point_2, current_step)
+                            interpolated_point.append(val)
+
+                        points[i] = list(interpolated_point)
+                elif left_index_2 == -1 and right_index_1 != -1 and right_index_2 != -1: # TODO Add extrapolation cases for missing furthest left or right point.
+                    left_point_1 = points[left_index_1] 
+                    right_point_1 = points[right_index_1]
+                    left_point_2 = points[left_index_2]
+                    right_point_2 = points[right_index_2]
+
+
+        # Now we update the original dictionary with the interpolated points
+        for i, time in enumerate(sorted_times):
+            if points[i] is not None and self.times_to_pos[time][0]['CONFIDENCE'] < 0:
+                self.times_to_pos[time][0]['LOCATION'] = points[i]
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
+                self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
+
     def compress(self,round_place = None):
         """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
         if self.compressed:
@@ -213,7 +293,8 @@ class Player:
         self.times_to_pos = newTtoP
 
     def combine_geometric(self,other):
-        """Combine two players using a weighted Geometric average. All values must be positive for a sensible result."""
+        """Combine all of the data from one player object with another using a weighted Geometric average. 
+        All values must be positive for a sensible result."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
         if (self.name != other.name):
@@ -227,7 +308,7 @@ class Player:
         for time in other.times_to_pos.keys():
             shared_times.add(time)
 
-        # now go through every point in the given time and add it to a list, while also adding all of there weights to a different list.
+        # now go through every point in the given time and add it to a list, while also adding all of their weights to a different list.
         for time in shared_times:
             weights  = []
             points_x = []
@@ -248,7 +329,14 @@ class Player:
             new_x = weighted_geometric_avrg(points_x,weights)
             newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
         self.times_to_pos = newTtoP
-
+def catmull_formula(p0, p1, p2, p3, t):
+    """ The calculation for catmull spline interpolation. """
+    return 0.5 * (
+        (2 * p1) +
+        (-p0 + p2) * t +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * t**2 +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * t**3
+    )
 class Team:
     """A List of Players"""
     list_of_players :list[Player]
@@ -368,16 +456,23 @@ class Teams_and_Meta:
                     for data in other.teams[i].list_of_players[j].times_to_pos[time]:
                         self.teams[i].list_of_players[j].times_to_pos.get(time,[]).append(data)
 
-def weighted_geometric_avrg(values : list, weights : list) -> float:
-    val = 1
+def weighted_geometric_avrg(values : list, weights : list, top_range = 10000) -> float:
+    """Calculate the weighted geometric average for two player objects. Called in the combine_geometric function
+    for calculation. Maps to [1 top_range] (10000 by default) to ensure log produces real results."""
+    v_min = min(values)
+    v_max = max(values)
     top_frac = 0
-    for i in range(len(values)):
-        top_frac += math.log(abs(values[i])) * weights[i]
+    min_range = 1
+    scaled_values = []
+    for val in values:
+        scaled_val = min_range + ((val - v_min) * (top_range - min_range) / (v_max - v_min))
+        scaled_values.append(scaled_val)
+    for i in range(len(scaled_values)):
+        top_frac += math.log(scaled_values[i]) * weights[i]
     bot_frac = sum(weights)
-    res = math.exp(top_frac / bot_frac)
-    if (isinstance(res,complex)):
-        return (res.real**2 + res.imag**2)**0.5
-    return res
+    res_scaled = math.exp(top_frac / bot_frac)
+    res_descaled = ((res_scaled - min_range) * (v_max - v_min) / (top_range - min_range)) + v_min
+    return res_descaled
 
 def similarity_calc(m1:dict[str,tuple|float], m2:dict[str,tuple|float]):
     """
