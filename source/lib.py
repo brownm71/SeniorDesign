@@ -227,6 +227,37 @@ class Player:
         self.times_to_pos = new_times_to_pos
         self.compressed = True
 
+    def compress_geometric(self,round_place : int = None):
+        """Compresses an historic player into having 1 datapoint per timestep.
+        If round_place is passed, it will round all numbers to that many decimal places."""
+        
+        newTtoP :dict[float,list[dict[str, tuple|float]]] = {}
+        
+        for time in self.times_to_pos.keys():
+            weights = []
+            points_x = []
+            points_y = []
+            
+            for data in self.times_to_pos.get(time,[]):
+                points_x.append(data['LOCATION'][0])
+                points_y.append(data['LOCATION'][1])
+                weights.append(data['CONFIDENCE'])
+
+            average_weights = sum(weights) / len(weights)
+
+            print(points_y)
+            print(points_x)
+
+            new_y = weighted_geometric_avrg(points_y,weights)
+            new_x = weighted_geometric_avrg(points_x,weights)
+            if round_place is not None:
+                new_x = round(new_x,round_place)
+                new_y = round(new_y,round_place)
+                average_weights = round(average_weights,round_place)
+            
+            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average_weights,'NUM_POINTS':len(weights)}]
+        self.times_to_pos = newTtoP
+
     def combine_arithmetic(self, other):
         """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
         if not isinstance(other,Player):
@@ -293,8 +324,7 @@ class Player:
         self.times_to_pos = newTtoP
 
     def combine_geometric(self,other):
-        """Combine all of the data from one player object with another using a weighted Geometric average. 
-        All values must be positive for a sensible result."""
+        """Combine all of the data from one player object with another using a weighted Geometric average."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
         if (self.name != other.name):
@@ -329,6 +359,7 @@ class Player:
             new_x = weighted_geometric_avrg(points_x,weights)
             newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
         self.times_to_pos = newTtoP
+
 def catmull_formula(p0, p1, p2, p3, t):
     """ The calculation for catmull spline interpolation. """
     return 0.5 * (
@@ -337,6 +368,7 @@ def catmull_formula(p0, p1, p2, p3, t):
         (2 * p0 - 5 * p1 + 4 * p2 - p3) * t**2 +
         (-p0 + 3 * p1 - 3 * p2 + p3) * t**3
     )
+
 class Team:
     """A List of Players"""
     list_of_players :list[Player]
@@ -461,6 +493,9 @@ def weighted_geometric_avrg(values : list, weights : list, top_range = 10000) ->
     for calculation. Maps to [1 top_range] (10000 by default) to ensure log produces real results."""
     v_min = min(values)
     v_max = max(values)
+    # Need to make sure that there is a difference in the max and min.
+    if v_max == v_min:
+        return v_max # there is only one value
     top_frac = 0
     min_range = 1
     scaled_values = []
