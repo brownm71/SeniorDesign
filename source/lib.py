@@ -97,36 +97,39 @@ class Player:
                 self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
 
-    def splineInterpolateFill(self, timestep = 1):
+    def splineInterpolateFill(self, timestep = 1, doBasicInterpolatePass = False):
         """Take all the points, and fill in missing ones using Spline Interpolation."""
         # assumes Initial positions are accurate and there.
 
         sorted_times = sorted(self.times_to_pos.keys())
         start_time = float(sorted_times[0])
         end_time = float(sorted_times[-1])
-
+        temp_times_to_pos = {}
         current_time = start_time
         while current_time <= end_time:
             if current_time not in self.times_to_pos:
                 # Add a placeholder for the missing time
-                self.times_to_pos[current_time] = [{'LOCATION': None, 'CONFIDENCE': -1.0}]
+                temp_times_to_pos[current_time] = [{'LOCATION': None, 'CONFIDENCE': -1.0}]
+            else:
+                temp_times_to_pos[current_time] = self.times_to_pos[current_time]
             current_time += timestep
 
         # make sure the times are sorted.
-        sorted_times = sorted(self.times_to_pos.keys())
+        sorted_times = sorted(temp_times_to_pos.keys())
         points = []
         for time in sorted_times:
-            if len(self.times_to_pos[time]) !=0:
-                confidence = self.times_to_pos[time][0]['CONFIDENCE']
+            if len(temp_times_to_pos[time]) !=0:
+                confidence = temp_times_to_pos[time][0]['CONFIDENCE']
                 if confidence < 0:
                     # this is a point to fill in.
                     points.append(None)
                 else:
-                    points.append(self.times_to_pos[time][0]['LOCATION'])
+                    points.append(temp_times_to_pos[time][0]['LOCATION'])
             else:
                 points.append(None) # this is a point to fill in
         # we have collected the points, now we fill in the gaps
         for i in range(len(points)):
+            doInterpolation = True
             if points[i] is None:
                 # This is a point to fill in.
                 # find the closest point to the left.
@@ -136,7 +139,7 @@ class Player:
                         left_index_1 = j
                         break
                 left_index_2 = -1
-                if points[left_index_1 -1] is not None:
+                if left_index_1 - 1 >= 0 and points[left_index_1 -1] is not None:
                     left_index_2 = left_index_1 - 1
                 # find the closest point to the right.
                 right_index_1 = -1
@@ -145,8 +148,9 @@ class Player:
                         right_index_1 = j
                         break
                 right_index_2 = -1
-                if points[right_index_1 + 1] is not None:
+                if right_index_1 + 1 <= len(points) - 1 and points[right_index_1 + 1] is not None:
                     right_index_2 = right_index_1 + 1
+
                 # if we have two points on both sides, we can interpolate
                 if left_index_1 != -1 and left_index_2 != -1 and right_index_1 != -1 and right_index_2 != -1:
                     left_point_1 = points[left_index_1]
@@ -154,28 +158,58 @@ class Player:
                     left_point_2 = points[left_index_2]
                     right_point_2 = points[right_index_2]
 
-                    total_steps = float(right_index_1 - left_index_1)
-                    current_step = float(i - left_index_1)
-                    if isinstance(left_point_1, list) and isinstance(right_point_1, list):
-                        interpolated_point = []
-                        for dim in range(len(left_point_1)): # so that any number of dimentions can be used.
-                            val = catmull_formula(left_point_1, left_point_2, right_point_1, right_point_2, current_step)
-                            interpolated_point.append(val)
-
-                        points[i] = list(interpolated_point)
-                elif left_index_2 == -1 and right_index_1 != -1 and right_index_2 != -1: # TODO Add extrapolation cases for missing furthest left or right point.
+                # if we are missing the furthest left point we need to fill it
+                elif left_index_2 == -1 and left_index_1 != -1 and right_index_1 != -1 and right_index_2 != -1:
                     left_point_1 = points[left_index_1] 
                     right_point_1 = points[right_index_1]
-                    left_point_2 = points[left_index_2]
                     right_point_2 = points[right_index_2]
 
+                    left_point_2 = []
+                    # generate an x and y coordinate based on the difference between the known right and left points.
+                    left_point_2.append(points[left_index_1][0] - (points[right_index_1][0] - points[left_index_1][0]))
+                    left_point_2.append(points[left_index_1][1] - (points[right_index_1][1] - points[left_index_1][1]))
+
+                # if we are missing the furthest right point we need to fill it
+                elif left_index_2 != -1 and left_index_1 != -1 and right_index_1 != -1 and right_index_2 == -1:
+                    left_point_1 = points[left_index_1] 
+                    left_point_2 = points[left_index_2]
+                    right_point_1 = points[right_index_1]
+                    right_point_2 = []
+
+                    # generate an x and y coordinate based on the difference between the known right and left points.
+                    right_point_2.append(points[right_index_1][0] + (points[right_index_1][0] - points[right_index_1][0]))
+                    right_point_2.append(points[right_index_1][1] + (points[right_index_1][1] - points[right_index_1][1]))
+
+                # Non-feasible case. Not enough data to interpolate.
+                else:
+                    doInterpolation = False
+                
+                # Do the interpolation
+                if (doInterpolation):
+                    numMissingPts = int(right_index_1 - left_index_1)
+                    for j in range(numMissingPts - 1):
+                        normalized_current_step = (j + 1) / numMissingPts
+                        interpolated_point = []
+                        val = []
+                        val.append(catmull_formula(left_point_2[0], left_point_1[0], right_point_1[0], right_point_2[0], normalized_current_step))
+                        val.append(catmull_formula(left_point_2[1], left_point_1[1], right_point_1[1], right_point_2[1], normalized_current_step))
+                        interpolated_point.append(val)
+                        print("appended")
+                        points[i + j] = list(interpolated_point)
+                    i += j
+
+                    
 
         # Now we update the original dictionary with the interpolated points
         for i, time in enumerate(sorted_times):
-            if points[i] is not None and self.times_to_pos[time][0]['CONFIDENCE'] < 0:
+            if points[i] is not None and temp_times_to_pos[time][0]['CONFIDENCE'] < 0:
+                if (self.times_to_pos.get(time, None) is None):
+                    self.times_to_pos[time] = [{}]
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
-                self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
-                self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.05 # Mark as interpolated 
+                self.times_to_pos[time][0]['NUMPOINTS'] = 1 
+        if (doBasicInterpolatePass):
+            self.basicInterpolateFill(timestep)
 
     def compress(self,round_place = None):
         """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
@@ -360,7 +394,7 @@ class Player:
             newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
         self.times_to_pos = newTtoP
 
-def catmull_formula(p0, p1, p2, p3, t):
+def catmull_formula(p0:float, p1:float, p2:float, p3:float, t:float) -> float:
     """ The calculation for catmull spline interpolation. """
     return 0.5 * (
         (2 * p1) +
