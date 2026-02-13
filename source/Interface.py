@@ -7,16 +7,16 @@ class STI:
     This object acts as an interface to the rest of the program, allowing ease of use with 
     built-in helper functions:
 
-    - get all data from a player.
-    - get all data from a team.
-    - get all data at a specific time / range of times / list of times.
-    - Combining many files
-    - getting global settings
-    - easy way to add data points
-    - velocity ???? (Highest Probable Velocity) ie. HPV (per player highest mesured velocity.)
-    - total distance traveled
-    - max speed ????
-    - Visualization prep : making into array (per player)
+    - get all data from a player. ()
+    - get all data from a team. ()
+    - get all data at a specific time / range of times / list of times. ()
+    - Combining many files ()
+    - getting global settings ()
+    - easy way to add data points ()
+    - velocity ???? (Highest Probable Velocity) ie. HPV (per player highest mesured velocity.) ()
+    - total distance traveled ()
+    - max speed ???? ()
+    - Visualization prep : making into array (per player) ()
     """
     parent_object : Teams_and_Meta
     filename : str 
@@ -30,6 +30,7 @@ class STI:
             return f'{self.filename} : {self.parent_object.meta['game_ID']}'
         else:
             return f'STI: No Parent'
+
     def load(self,filename):
         """Reads in a file, and sets it to be the edited object."""
         self.parent_object = readJson(filename)
@@ -82,9 +83,6 @@ class STI:
         :type filenames_to_combine: list[str]
         :param method: determains the method used to combine.
         """
-        
-
-
         # no matter the branch, we need to read in the files.
         files : list[Teams_and_Meta] = []
         for filename in filenames_to_combine:
@@ -102,6 +100,7 @@ class STI:
             # go through each one and combine it with the parent object
             for file in files:
                 self.parent_object.combine(file)
+                
         elif method == 'G':
             # Geometric Mean
             # First get historic
@@ -130,8 +129,74 @@ class STI:
         :type STIs_to_combine: list[STI]
         :param method: determains the method used to combine.
         """
-        # TODO
-        pass
+        # check the game IDs
+        for sti in STIs_to_combine:
+            if sti.parent_object.meta['game_ID'] != self.parent_object.meta['game_ID']:
+                raise Exception(f"At least one STI is of a different Game: {sti.parent_object.meta['game_ID']}")
+        
+        if method == 'A':
+            # Arithmeitic Mean
+            # go through each one and combine it with the parent object
+            for sti in STIs_to_combine:
+                self.parent_object.combine(sti.parent_object)
+
+        elif method == 'G':
+            # Geometric Mean
+            # First get historic
+            for sti in STIs_to_combine:
+                self.parent_object.combine_historic(sti.parent_object)
+            # now we compress Geometricly
+            for team in self.parent_object.teams:
+                for player in team.list_of_players:
+                    player.compress_geometric()
+
+        elif method == 'H':
+            # Historic Method
+            for sti in STIs_to_combine:
+                self.parent_object.combine_historic(sti.parent_object) 
+        else:
+            raise Exception(f'{method} does not represent a known method.')
+
+    def combine_Teams_and_Meta(self,Teams_and_Meta_to_combine : list[Teams_and_Meta],method = 'A'):
+        """
+        merges any number of seperate Teams_and_Meta into this STI, using one of the given Methods:
+        \n"A" : Arithmetic Mean (Good for most cases)
+        \n"G" : Geometric Mean
+        \n"H" : Historic (Keeps all datapoints and does no math)
+
+        :param Teams_and_Meta_to_combine: List of Teams_and_Meta objects.
+        :type Teams_and_Meta_to_combine: list[Teams_and_Meta]
+        :param method: determains the method used to combine.
+        """
+        # check the game IDs
+        for tm in Teams_and_Meta_to_combine:
+            if tm.meta['game_ID'] != self.parent_object.meta['game_ID']:
+                raise Exception(f"At least one Teams_and_Meta is of a different Game: {tm.meta['game_ID']}")
+        
+        if method == 'A':
+            # Arithmeitic Mean
+            # go through each one and combine it with the parent object
+            for tm in Teams_and_Meta_to_combine:
+                self.parent_object.combine(tm)
+
+        elif method == 'G':
+            # Geometric Mean
+            # First get historic
+            for tm in Teams_and_Meta_to_combine:
+                self.parent_object.combine_historic(tm)
+            # now we compress Geometricly
+            for team in self.parent_object.teams:
+                for player in team.list_of_players:
+                    player.compress_geometric()
+
+        elif method == 'H':
+            # Historic Method
+            for tm in Teams_and_Meta_to_combine:
+                self.parent_object.combine_historic(tm) 
+        else:
+            raise Exception(f'{method} does not represent a known method.')
+
+
 if __name__ == '__main__':
     sti = STI()
     sti.load('t.json')
