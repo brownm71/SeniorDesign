@@ -10,22 +10,27 @@
             "TEAM 1":{
                 "player_1":{
                     "0": [{
-                        "LOCATION": [0,0],
+                        "LOCATION": [0,1],
                         "CONFIDENCE": 0.9,
                         "NUMPOINTS":1
-                        },
-                        {
-                        "LOCATION": [2,2],
-                        "CONFIDENCE": 0.1,
+                        }],
+                    "1": [{
+                        "LOCATION": [1,2],
+                        "CONFIDENCE": 0.9,
                         "NUMPOINTS":1
                         }],
                     "2": [{
-                        "LOCATION": [2,2],
+                        "LOCATION": [2,3],
                         "CONFIDENCE": 0.9,
                         "NUMPOINTS":1
                         }],
                     "4": [{
-                        "LOCATION": [4,4],
+                        "LOCATION": [4,5],
+                        "CONFIDENCE": 0.25,
+                        "NUMPOINTS":1
+                        }],
+                    "5": [{
+                        "LOCATION": [5,6],
                         "CONFIDENCE": 0.25,
                         "NUMPOINTS":1
                         }]

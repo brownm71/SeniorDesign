@@ -1,10 +1,12 @@
 # Tasks for Spring 2026
 ## Fix problems we already know - 3 Week Estimate
-1. fix geometric mean with shifting data &check;
+1. fix geometric mean with shifting data
+    - Idea: Geometric step mean with point by point confidence update.
 2. Add interpolation not bad also better missing point handling.
 3. Get some real world data 
 ## Data analysis user STI - 3 Week Estimate
 Access our data structure after file load for external work.
+- Lets make a list of things we want in it.
 ## Error method using Discrete Bayesian Filter. - 4 Week Estimate
 Possible change in error measurement.
 Does confidence intervals and so forth.
