@@ -296,7 +296,40 @@ class Player:
                 new_y = round(new_y,round_place)
                 average_weights = round(average_weights,round_place)
             
-            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average_weights,'NUM_POINTS':len(weights)}]
+            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average_weights,'NUMPOINTS':len(weights)}]
+        self.times_to_pos = newTtoP
+
+    def compress_geometric_iterative(self,round_place : int = None, bayesian = False):
+        """Compute geometric mean pointwise rather than all at once for one player. """
+        
+        newTtoP :dict[float,list[dict[str, tuple|float]]] = {}
+        
+        for time in self.times_to_pos.keys(): 
+            new_x = self.times_to_pos[time][0]['LOCATION'][0]
+            new_y = self.times_to_pos[time][0]['LOCATION'][1]
+            newConf = self.times_to_pos[time][0]['CONFIDENCE']
+            numPoints = self.times_to_pos[time][0]['NUMPOINTS']
+            for i in range(len(self.times_to_pos[time])-1):    
+                numPoints += self.times_to_pos[time][i+1]['NUMPOINTS']
+
+                temp_x = self.times_to_pos[time][i+1]['LOCATION'][0]
+                temp_y = self.times_to_pos[time][i+1]['LOCATION'][1]
+                tempConf = self.times_to_pos[time][i+1]['CONFIDENCE']
+                
+                new_x = weighted_geometric_avrg([new_x, temp_x], [newConf, tempConf])
+                new_y = weighted_geometric_avrg([new_y, temp_y], [newConf, tempConf])
+                sim = similarity_calc(self.times_to_pos[time][i], self.times_to_pos[time][i+1])
+
+                if (bayesian):
+                    newConf = update_confidence_bayesian(tempConf, newConf, sim)
+                else:
+                    newConf = update_confidence(tempConf, newConf, sim, numPoints)
+
+            if round_place is not None:
+                new_x = round(new_x,round_place)
+                new_y = round(new_y,round_place)
+            
+            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : newConf,'NUMPOINTS':numPoints}]
         self.times_to_pos = newTtoP
 
     def combine_arithmetic(self, other, bayesian = False):
@@ -401,8 +434,75 @@ class Player:
 
             new_y = weighted_geometric_avrg(points_y,weights)
             new_x = weighted_geometric_avrg(points_x,weights)
-            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
+            newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUMPOINTS':len(weights)}]
         self.times_to_pos = newTtoP
+
+    def combine_geometric_iterative(self, other, bayesian = False):
+        """Compute geometric mean pointwise rather than all at once for two players. """
+        if not isinstance(other,Player):
+            raise Exception('Must combine with a player.')
+        if (self.name != other.name):
+            raise Exception("Must combine players that are the same.")
+        newTtoP :dict[float,list[dict[str, tuple|float]]]= {}
+        
+        shared_times = set()
+        for time in self.times_to_pos.keys():
+            shared_times.add(time)
+        for time in other.times_to_pos.keys():
+            shared_times.add(time)
+        
+        # check if either needs to be compressed:
+        for time in shared_times:
+            if len(self.times_to_pos.get(time,[])) > 1:
+                # self needs to be commpressed.
+                self.compress_geometric_iterative(bayesian=bayesian)
+            if len(other.times_to_pos.get(time,[])) > 1:
+                # other needs to be commpressed.
+                other.compress_geometric_iterative(bayesian=bayesian)
+
+        # sharedTimes contains all unique time values
+        for time in shared_times:
+            current_data = self.times_to_pos.get(time)
+            new_data = other.times_to_pos.get(time)
+            if (current_data is None or len(current_data)==0):
+                newTtoP[time] = new_data
+                continue
+            elif (new_data is None or len(new_data)==0):
+                newTtoP[time] = current_data
+                continue
+
+
+            newTtoP[time] = [{}]
+
+            total_points = self.times_to_pos.get(time)[0]['NUMPOINTS'] + other.times_to_pos.get(time)[0]['NUMPOINTS']
+
+            self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
+            other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
+            similarity = similarity_calc(self.times_to_pos.get(time)[0], other.times_to_pos.get(time)[0])
+
+            if (bayesian):
+                new_confidence = update_confidence_bayesian(self_confidence, other_confidence, similarity)
+            else:
+                new_confidence = update_confidence(self_confidence, other_confidence, similarity, total_points)
+            
+            newTtoP[time][0]['CONFIDENCE'] = new_confidence
+            
+            self_location_x = self.times_to_pos.get(time)[0]['LOCATION'][0]
+            self_location_y = self.times_to_pos.get(time)[0]['LOCATION'][1]
+            other_location_x = other.times_to_pos.get(time)[0]['LOCATION'][0]
+            other_location_y = other.times_to_pos.get(time)[0]['LOCATION'][1]
+
+            new_x_location = weighted_geometric_avrg([self_location_x, other_location_x], [self_confidence, other_confidence])
+            new_y_location = weighted_geometric_avrg([self_location_y, other_location_y], [self_confidence, other_confidence])
+            
+            newTtoP[time][0]['LOCATION'] = []
+            newTtoP[time][0]['LOCATION'].append(new_x_location)
+            newTtoP[time][0]['LOCATION'].append(new_y_location)
+            
+            newTtoP[time][0]['NUMPOINTS'] = total_points
+        self.times_to_pos = newTtoP
+        
+        
 
     # Helper functions
     def get_estimated_velocity(self,time : int):
@@ -563,6 +663,10 @@ class Teams_and_Meta:
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
                     self.teams[i].list_of_players[j].combine_geometric(other.teams[i].list_of_players[j])
+        if method =='GeometricIt':
+            for i in range(len(self.teams)):
+                for j in range(len(self.teams[i].list_of_players)):
+                    self.teams[i].list_of_players[j].combine_geometric_iterative(other.teams[i].list_of_players[j], bayesian)
         self.fill_std_dev(orig)
         
         

@@ -4,11 +4,12 @@
     - Idea: Geometric step mean with point by point confidence update. 
 2. Add interpolation not bad also better missing point handling. &check;
 3. Get some real world data 
-### Make into a PyProject
-## Data analysis user STI - 3 Week Estimate
+    - Use a runtracker for gps data and our own estimate for multiple sources.
+## Make into a PyProject
+## Data analysis user STI - 3 Week Estimate &check;
 Access our data structure after file load for external work.
 - Lets make a list of things we want in it.
-## Error method using Discrete Bayesian Filter. - 4 Week Estimate
+## Error method using Discrete Bayesian Filter. - 4 Week Estimate &check;
 Possible change in error measurement.
 Does confidence intervals and so forth.
 ## Write an academic paper - 2 Week Estimate Overlap with Poster

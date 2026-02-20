@@ -8,10 +8,6 @@ if __name__ == '__main__':
     r = create_reconstructed(file,10,0,15,100,.5)
     fileIO.writeJson("jimmy.json", r)
     print(evaluate(file, r, true_div))
-    random.seed(42)
-    r = create_reconstructed(file,10,0,15,100,.5, True)
-    fileIO.writeJson("jimmy.json", r)
-    print(evaluate(file, r, true_div))
 
 
 # def std_div_check(actual : Teams_and_Meta, constructed : Teams_and_Meta):
