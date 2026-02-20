@@ -1,8 +1,11 @@
 import copy
 import math
 class Player:
-    """Represents a player throughout the game."""
+    """
+    Represents a player throughout the game.
+    """
     times_to_pos : dict[float,list[dict[str,tuple|float]]] # (5,7)=x[1.2]['LOCATION']
+    times_to_velocitys :dict[float,list[float,float]]
     compressed : bool
 
     def __str__(self):
@@ -15,7 +18,7 @@ class Player:
         self.times_to_pos = {}
         self.name = name
         self.compressed = False
-
+        self.times_to_velocitys = None
         if player_dict is None:
             self.player_dict = {}
 
@@ -393,6 +396,98 @@ class Player:
             new_x = weighted_geometric_avrg(points_x,weights)
             newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average,'NUM_POINTS':len(weights)}]
         self.times_to_pos = newTtoP
+
+    # Helper functions
+    def get_estimated_velocity(self,time : int):
+        """Returns the estimated velocity at the given time."""
+        if self.times_to_velocitys is None:
+            self.calc_velocity_estimate()
+        return self.times_to_velocitys[time]
+
+    def get_times_from_location(self,location : tuple[float,float],allowable_radius :float = 1):
+        """Returns the time that a player was at the given location within the allowable Radius."""
+        res_times = []
+        for time in self.times_to_pos.keys():
+            pos = self.times_to_pos[time]["LOCATION"]
+            if ((location[0]-pos[0])**2) + ((location[1]-pos[0])**2) >= allowable_radius**2:
+                # Within distance.
+                res_times.append(time)
+        return res_times
+    
+    def get_location_from_times(self,times : list[int]) -> list[tuple]:
+        """Returns the location at given times"""
+        res = []
+        for time in times:
+            res.append(self.times_to_pos[time]['LOCATION'])
+        return res
+    
+    def calc_velocity_estimate(self) ->dict[float|list[float,float]]:
+        """
+        Takes all the position data, and attempts to find instantinous velocity\n
+        This is saved to self.times_to_velocitys, which is also returned by this function.
+        """
+        self.times_to_velocitys = {} 
+
+        sorted_times = sorted(self.times_to_pos.keys())
+        
+        if len(sorted_times) < 2:
+            return
+
+        # Helper to find nearest valid point
+        def find_valid_point(start_index, direction):
+            idx = start_index + direction
+            while 0 <= idx < len(sorted_times):
+                time = sorted_times[idx]
+                if self.times_to_pos.get(time) and len(self.times_to_pos[time]) > 0:
+                    data = self.times_to_pos[time][0]
+                    if data.get('LOCATION') is not None:
+                        return time, data['LOCATION']
+                idx += direction
+            return None, None
+
+        for i, time in enumerate(sorted_times):
+            # Skip if no data for this time
+            if not self.times_to_pos.get(time) or len(self.times_to_pos[time]) == 0 or self.times_to_pos[time][0].get('LOCATION') is None:
+                continue
+
+            pos = self.times_to_pos[time][0]['LOCATION']
+            
+            prev_time, prev_pos = find_valid_point(i, -1)
+            next_time, next_pos = find_valid_point(i, 1)
+
+            vx, vy = 0.0, 0.0
+
+            if prev_time is not None and next_time is not None:
+                # Central difference
+                dt = next_time - prev_time
+                if dt > 0:
+                    vx = (next_pos[0] - prev_pos[0]) / dt
+                    vy = (next_pos[1] - prev_pos[1]) / dt
+            elif next_time is not None:
+                # Forward difference
+                dt = next_time - time
+                if dt > 0:
+                    vx = (next_pos[0] - pos[0]) / dt
+                    vy = (next_pos[1] - pos[1]) / dt
+            elif prev_time is not None:
+                # Backward difference
+                dt = time - prev_time
+                if dt > 0:
+                    vx = (pos[0] - prev_pos[0]) / dt
+                    vy = (pos[1] - prev_pos[1]) / dt
+            
+            self.times_to_velocitys[time] = [vx,vy]
+
+    def get_list_of_positions(self) -> list[tuple[float,float]]:
+        """This returns a list of the positions in cronological order.\n
+        **WARNING: This will compress the player object so the data is as accurate as possable.**
+        """
+        self.compress()
+        sorted_times = sorted(self.times_to_pos.keys())
+        res = []
+        for time in sorted_times:
+            res.append(self.times_to_pos[time][0]['LOCATION'])
+        return res
 
 def catmull_formula(p0:float, p1:float, p2:float, p3:float, t:float) -> float:
     """ The calculation for catmull spline interpolation. """
