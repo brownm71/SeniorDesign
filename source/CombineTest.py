@@ -7,5 +7,5 @@ filenames = ("SeniorDesign\\docs\\singleTeamTest.json","SeniorDesign\\docs\\sing
 
 f1 = readJson(filenames[0])
 f2 = readJson(filenames[1])
-f1.combine_historic(f2)
+f1.combine(f2, bayesian=True)
 writeJson('test.json',f1)

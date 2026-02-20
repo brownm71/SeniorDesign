@@ -28,11 +28,6 @@
                         "LOCATION": [4,5],
                         "CONFIDENCE": 0.25,
                         "NUMPOINTS":1
-                        }],
-                    "5": [{
-                        "LOCATION": [5,6],
-                        "CONFIDENCE": 0.25,
-                        "NUMPOINTS":1
                         }]
                 },
                 "player_2":{

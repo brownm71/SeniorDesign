@@ -7,10 +7,10 @@ class STI:
     This object acts as an interface to the rest of the program, allowing ease of use with 
     built-in helper functions:
 
-    - get all data from a player. ()
-    - get all data from a team. ()
+    - get all data from a player. (x)
+    - get all data from a team. (x)
     - get all data at a specific time / range of times / list of times. ()
-    - Combining many files ()
+    - Combining many files (x)
     - getting global settings ()
     - easy way to add data points ()
     - velocity ???? (Highest Probable Velocity) ie. HPV (per player highest mesured velocity.) ()

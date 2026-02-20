@@ -211,7 +211,7 @@ class Player:
         if (doBasicInterpolatePass):
             self.basicInterpolateFill(timestep)
 
-    def compress(self,round_place = None):
+    def compress(self,round_place = None, bayesian = False):
         """Compresses multiple data points at the same timestamp into a single, weighted-average point."""
         if self.compressed:
             return
@@ -230,7 +230,11 @@ class Player:
                 self_con = data_points[0]['CONFIDENCE']
                 other_con = data_points[i+1]['CONFIDENCE']
                 similarity = similarity_calc(data_points[0], data_points[i+1])
-                new_confidence = update_confidence(self_con, other_con, similarity, total_numpoints)
+                total_numpoints = data_points[0]['NUMPOINTS'] + data_points[i+1]['NUMPOINTS']
+                if (bayesian):
+                    new_confidence = update_confidence_bayesian(self_con, other_con, similarity)
+                else:
+                    new_confidence = update_confidence(self_con, other_con, similarity, total_numpoints)
 
                 self_weighted_location_x = self_weight * self_con * data_points[0]['LOCATION'][0]
                 self_weighted_location_y = self_weight * self_con * data_points[0]['LOCATION'][1]
@@ -242,7 +246,7 @@ class Player:
 
                 new_location = [new_x_location,new_y_location]
 
-                total_numpoints = data_points[0]['NUMPOINTS'] + data_points[i+1]['NUMPOINTS']
+                
 
                 # update for next itteration.
                 data_points[0]['LOCATION'] = new_location
@@ -292,7 +296,7 @@ class Player:
             newTtoP[time] = [{'LOCATION':[new_x,new_y],'CONFIDENCE' : average_weights,'NUM_POINTS':len(weights)}]
         self.times_to_pos = newTtoP
 
-    def combine_arithmetic(self, other):
+    def combine_arithmetic(self, other, bayesian = False):
         """Combine two player objects into one player using weighted arithmetic mean on confidence and nuber of points."""
         if not isinstance(other,Player):
             raise Exception('Must combine with a player.')
@@ -310,10 +314,10 @@ class Player:
         for time in shared_times:
             if len(self.times_to_pos.get(time,[])) > 1:
                 # self needs to be commpressed.
-                self.compress()
+                self.compress(bayesian=bayesian)
             if len(other.times_to_pos.get(time,[])) > 1:
                 # other needs to be commpressed.
-                other.compress()
+                other.compress(bayesian=bayesian)
 
 
 
@@ -338,7 +342,10 @@ class Player:
             self_confidence = self.times_to_pos.get(time)[0]['CONFIDENCE']
             other_confidence = other.times_to_pos.get(time)[0]['CONFIDENCE']
             similarity = similarity_calc(self.times_to_pos.get(time)[0], other.times_to_pos.get(time)[0])
-            new_confidence = update_confidence(self_confidence, other_confidence, similarity, total_points)
+            if (bayesian):
+                new_confidence = update_confidence_bayesian(self_confidence, other_confidence, similarity)
+            else:
+                new_confidence = update_confidence(self_confidence, other_confidence, similarity, total_points)
             
             newTtoP[time][0]['CONFIDENCE'] = new_confidence
             
@@ -444,7 +451,7 @@ class Teams_and_Meta:
         res = Teams_and_Meta(res_teams,newMeta)
         return res
     
-    def combine(self,other,method = 'Arithmetic',fill = False):
+    def combine(self,other,method = 'Arithmetic',fill = False, bayesian = False):
         if self.meta['game_ID'] != other.meta['game_ID']:
             raise Exception("Files do not share a Game ID.")
         
@@ -456,7 +463,7 @@ class Teams_and_Meta:
         if method =='Arithmetic':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
-                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j])
+                    self.teams[i].list_of_players[j].combine_arithmetic(other.teams[i].list_of_players[j], bayesian)
         if method =='Geometric':
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
@@ -597,12 +604,38 @@ def net_standard_deviation(sds, num_sd):
         sd_sum += sd
     return sd_sum / len(sds)
 
-def update_confidence(c1, c2, similarity, total_points):
+def update_confidence(c1:float, c2:float, similarity:float, total_points:int):
+    """Update the confidence of a player's position given two locations for a given time with confidences c1 and c2. 
+    Use the similarity between the two locations to determine whether to increase or decrease the resulting confidence."""
     if (similarity < 0.45):
-        new_confidence = ((c1 + c2) / 2) * (1/total_points) * (similarity / 0.45) # Scale with how statistically different they are. 0.5 is just enough to count as different so just average them.
+        # Scale with how statistically different they are. 0.45 is just enough to count as different so just average them.
+        new_confidence = ((c1 + c2) / 2) * (1/total_points) * (similarity / 0.45) 
     else:
         largest = (max(c1 ,c2))
         smallest = min(c1,c2)
+        # Scale towards one using the smaller confidence starting from the larger confidence.
         new_confidence = largest + (1/total_points) * (1-largest) * smallest
 
     return new_confidence
+
+def update_confidence_bayesian(newConf:float, currConf:float, similarity:float) -> float:
+    """Use Bayesian Update Methodology to update the confidence using the current confidence and the confidence of the 
+    added point."""
+    if similarity >= 0.45:
+        likelihood_true = currConf
+        likelihood_false = 1.0 - currConf 
+    else:
+        likelihood_true = 1.0 - currConf
+        likelihood_false = currConf
+    # 3. Apply Bayes' Theorem
+    # P(True | Obs) = [P(Obs | True) * P(True)] / P(Obs)
+    numerator = likelihood_true * newConf
+    
+    # The denominator is the total probability of this observation occurring
+    # P(Obs | True)*P(True) + P(Obs | False)*P(False)
+    denominator = (likelihood_true * newConf) + (likelihood_false * (1.0 - newConf))
+    
+    new_confidence = numerator / denominator
+
+    return new_confidence
+

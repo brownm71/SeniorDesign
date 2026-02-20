@@ -4,7 +4,12 @@ from flaw import *
 random.seed(42)
 if __name__ == '__main__':
     file = fileIO.readJson(r"jimJson.json")
+    random.seed(42)
     r = create_reconstructed(file,10,0,15,100,.5)
+    fileIO.writeJson("jimmy.json", r)
+    print(evaluate(file, r, true_div))
+    random.seed(42)
+    r = create_reconstructed(file,10,0,15,100,.5, True)
     fileIO.writeJson("jimmy.json", r)
     print(evaluate(file, r, true_div))
 
