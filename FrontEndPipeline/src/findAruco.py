@@ -35,7 +35,7 @@ def detect_high_accuracy_marker_zero(image):
     # This dictates how many pixels around the rough corner the algorithm 
     # looks at to find the exact sub-pixel corner. Default is usually fine, 
     # but you can increase it slightly if your marker is very large in the frame.
-    # parameters.cornerRefinementWinSize = 5 
+    parameters.cornerRefinementWinSize = 5 
     
     # 4. Create the detector object (Modern OpenCV 4.7+ syntax)
     detector = cv2.aruco.ArucoDetector(dictionary, parameters)
@@ -54,7 +54,7 @@ def detect_high_accuracy_marker_zero(image):
                 marker_0_corners = corners[i][0]
                 
                 # Optional: Draw the detection on the image for debugging
-                cv2.aruco.drawDetectedMarkers(image, corners, ids)
+                # cv2.aruco.drawDetectedMarkers(image, corners, ids)
                 
                 return marker_0_corners
                 

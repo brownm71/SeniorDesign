@@ -70,12 +70,13 @@ def get_2d_localization_homography(object_pixel, H):
 # print(f"Object is located at X: {X:.2f} cm, Y: {Y:.2f} cm")
 
 if __name__ == "__main__":
-    markerLocationArray = detect_high_accuracy_marker_zero(r"C:\Users\Mike\Desktop\Senior Design\frames\frame_0000.png")
+    markerLocationArray = detect_high_accuracy_marker_zero(r"C:\Users\Mike\Desktop\Senior Design\frames\metest.png")
+    print(markerLocationArray)
     H = calculate_homography(markerLocationArray, 16.5)
 
     frame_folder = "frames"
     frames = sorted(os.listdir(frame_folder))
-    frame_name = "frame_0016.png"
+    frame_name = "metest.png"
     t = 0
 
     # for t, frame_name in enumerate(frames):
