@@ -1,7 +1,8 @@
 import os
 import subprocess
 from pathlib import Path
-ffmpeg_path = r"C:\Users\crimj\OneDrive\Documents\ffmpeg-7.0.2-full_build\ffmpeg-7.0.2-full_build\bin\ffmpeg.exe"
+# ffmpeg_path = r"C:\Users\crimj\OneDrive\Documents\ffmpeg-7.0.2-full_build\ffmpeg-7.0.2-full_build\bin\ffmpeg.exe"
+ffmpeg_path = r"C:\ffmpeg-8.0.1-full_build\bin\ffmpeg.exe"
 def extract_frames_at_timesteps(video_path, timesteps, output_dir="frames", 
                                 filename_prefix="frame", image_format="png"):
     """
@@ -51,4 +52,4 @@ def extract_frames_at_timesteps(video_path, timesteps, output_dir="frames",
 
     print(f"Extracted {len(timesteps)} frames to '{output_dir}'")
 
-e = extract_frames_at_timesteps(r"2026-03-02 19-55-35.mp4",[0,.5,1,1.5,2,2.5,3,3.5,5,5.5,6])
+e = extract_frames_at_timesteps(r"C:\Users\Mike\Desktop\Senior Design\IMG_3644-MP4 File Output.mp4",[0,.5,1,1.5,2,2.5,3,3.5,5,5.5,6])

@@ -117,7 +117,7 @@ model.to(device)
 # 2. Initialize tracker
 tracker = SimpleTracker(iou_threshold=0.2, max_age=40)
 
-text_prompt = "computer mouse cursor. "
+text_prompt = "person . "
 
 def detect_and_track(image_path):
     print(f"\nProcessing: {image_path}")

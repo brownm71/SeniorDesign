@@ -20,7 +20,7 @@ def detect_players_dino(image_path):
 
     # 3. Define your text prompt
     # Grounding DINO requires periods after each concept
-    text_prompt = "person . sports player . referee ."
+    text_prompt = "sports player ."
 
     # 4. Preprocess the inputs
     inputs = processor(images=image, text=text_prompt, return_tensors="pt").to(device)
