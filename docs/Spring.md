@@ -1,7 +1,7 @@
 # Tasks for Spring 2026
 ## Fix problems we already know - 3 Week Estimate
 1. fix geometric mean with shifting data &check;
-    - Idea: Geometric step mean with point by point confidence update. 
+    - Idea: Geometric step mean with point by point confidence update.  &check;
 2. Add interpolation not bad also better missing point handling. &check;
 3. Get some real world data 
     - Use a runtracker for gps data and our own estimate for multiple sources.
@@ -33,3 +33,21 @@ Data analysis.
 ## Can we build the front end?
 David already working on. Not really our concern.
 Ai that gives measurements.
+
+
+# Options Moving Forward 2/27/26
+## Build out some form of the front end
+- Sounds hard. Black box.
+
+
+## Data Analytics
+- Much easier. Do math. Joe says less fun.
+- Ai analysis? - curiosity
+
+# Chosen
+## Building the front end
+Work on for coming weeks until paper writing
+## Write academic paper with results
+include updated graphs and tests with both missing points and varied pts
+## Data Analysis
+Keep it simple. Not really a focus. Try feeding output file to AI for analysis. 
