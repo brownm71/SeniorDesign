@@ -137,33 +137,6 @@ class SimpleTracker:
 
         return self.tracks
 
-
-# -----------------------------
-# Load DINO Model
-# -----------------------------
-
-model_id = "IDEA-Research/grounding-dino-base"
-
-processor = AutoProcessor.from_pretrained(model_id)
-model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model.to(device)
-
-# -----------------------------
-# Initialize Tracker
-# -----------------------------
-
-tracker = SimpleTracker(iou_threshold=0.2, max_age=40)
-
-text_prompt = "computer mouse cursor. "
-
-# -----------------------------
-# Timeline Dictionary
-# -----------------------------
-
-timeline = {}
-
 # -----------------------------
 # Detection + Tracking Function
 # -----------------------------
@@ -228,28 +201,63 @@ def detect_and_track(image_path, timestep):
         cv2.circle(cv_image, (bx, by), 4, (255,0,0), -1)
 
     cv2.imshow("Tracked", cv_image)
+    cv2.imwrite("I5.png", cv_image)
     cv2.waitKey(1)
 
     print("Frame Done")
 
-
 # -----------------------------
-# Run Over Frames
-# -----------------------------
-
-frame_folder = "frames"
-frames = sorted(os.listdir(frame_folder))
-
-for t, frame_name in enumerate(frames):
-
-    detect_and_track(os.path.join(frame_folder, frame_name), t)
-
-cv2.destroyAllWindows()
-
-
-# -----------------------------
-# Example Access
+# Load DINO Model
 # -----------------------------
 
-print("\nTimeline Example:")
-print(timeline)
+model_id = "IDEA-Research/grounding-dino-base"
+
+processor = AutoProcessor.from_pretrained(model_id)
+model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+tracker = SimpleTracker(iou_threshold=0.2, max_age=40)
+
+text_prompt = "person . "
+
+# -----------------------------
+# Timeline Dictionary
+# -----------------------------
+
+timeline = {}
+
+if __name__ == "__main__":
+    
+    
+
+    # -----------------------------
+    # Initialize Tracker
+    # -----------------------------
+
+    
+
+
+
+
+    # -----------------------------
+    # Run Over Frames
+    # -----------------------------
+
+    frame_folder = "frames"
+    frames = sorted(os.listdir(frame_folder))
+
+    for t, frame_name in enumerate(frames):
+
+        detect_and_track(os.path.join(frame_folder, frame_name), t)
+
+    cv2.destroyAllWindows()
+
+
+    # -----------------------------
+    # Example Access
+    # -----------------------------
+
+    print("\nTimeline Example:")
+    print(timeline)
