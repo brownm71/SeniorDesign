@@ -54,4 +54,4 @@ def extract_frames_at_timesteps(video_path, timesteps, output_dir="frames",
 
     print(f"Extracted {len(timesteps)} frames to '{output_dir}'")
 
-e = extract_frames_at_timesteps(r"IMG_3644-MP4 File Output.mp4",[0,.5,1,1.5,2,2.5,3,3.5,5,5.5,6,10, 10.5, 11, 11.5, 27, 27.5])
+e = extract_frames_at_timesteps(r"IMG_3644-MP4 File Output.mp4",[0,.5,1,1.5,2,2.5,3,3.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10, 10.5, 11, 11.5, 12,12.5,13,13.5,14,14.5,15])
