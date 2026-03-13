@@ -80,7 +80,7 @@ class Tracker:
         y2 = new_center[1] + h/2
         return np.array([x1, y1, x2, y2])
 
-    def update(self, detections, frame=None):
+    def update(self, detections, scores=None, frame=None):
         """
         detections: list of np.array([x1,y1,x2,y2])
         frame: np.array BGR image for computing color histograms
@@ -143,7 +143,8 @@ class Tracker:
                         "box": smoothed_box,
                         "age": 0,
                         "velocity": velocity,
-                        "hist": det_hists[c]
+                        "hist": det_hists[c],
+                        "score": scores[c] if scores is not None else None
                     }
                     assigned_dets.add(c)
 
@@ -154,7 +155,8 @@ class Tracker:
                         "box": det,
                         "age": 0,
                         "velocity": np.array([0,0]),
-                        "hist": det_hists[i]
+                        "hist": det_hists[i],
+                        "score": scores[i] if scores is not None else None
                     }
                     self.next_id += 1
         else:
@@ -184,7 +186,8 @@ class Tracker:
                     }
 
         self.tracks = updated_tracks
-        return {tid: data["box"] for tid, data in self.tracks.items()}
+        return {tid: {"box": data["box"], "score": data.get("score", None)}
+            for tid, data in self.tracks.items()}
 
 class Detector:
     def __init__(self):
@@ -232,10 +235,13 @@ class TrackingSystem:
         frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
         boxes, scores = self.detector.detect(image)
-        tracks = self.tracker.update(boxes, frame=frame)
+        tracks = self.tracker.update(boxes, scores=scores, frame=frame)
 
         self.timeline[timestep] = {}
-        for track_id, box in tracks.items():
+        for track_id, data in tracks.items():
+            box = data["box"]
+            score = data["score"]
+
             x1, y1, x2, y2 = map(int, box)
             bottom = self.tracker.bottom_middle(box)
             self.timeline[timestep][track_id] = {
@@ -243,7 +249,11 @@ class TrackingSystem:
                 "bottom_middle": bottom
             }
             cv2.rectangle(frame, (x1,y1), (x2,y2), (0,255,0), 2)
-            cv2.putText(frame, f"ID {track_id}", (x1, y1-10),
+            label = f"ID {track_id}"
+            if score is not None:
+                label += f" {score:.2f}"
+
+            cv2.putText(frame, label, (x1, y1-10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
             cv2.circle(frame, bottom, 4, (255,0,0), -1)
 

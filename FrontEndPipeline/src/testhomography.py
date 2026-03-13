@@ -1,13 +1,10 @@
 import cv2
 import numpy as np
 import os
-
 from findAruco import *
 from Detection_and_Tracking import TrackingSystem
 
-
 # 16.5 cm marker
-
 
 def calculate_homography(marker_pixel_corners, marker_size_cm):
     world_corners = np.array([
@@ -32,14 +29,7 @@ def get_2d_localization_homography(object_pixel, H) -> tuple[float, float]:
 
     return (float(X_cm), float(Y_cm))
 
-
 if __name__ == "__main__":
-    # Detect reference marker
-    markerLocationArray = detect_high_accuracy_marker_zero(r"frames\metest.png")
-    print("Marker Corners:", markerLocationArray)
-
-    # Build homography matrix
-    H = calculate_homography(markerLocationArray, 16.5)
 
     # Initialize tracking system
     system = TrackingSystem()
@@ -47,13 +37,20 @@ if __name__ == "__main__":
     frame_folder = "frames"
     frames = sorted(os.listdir(frame_folder))
 
-    # Example single frame
-    frame_name = "metest.png"
-    frame_path = os.path.join(frame_folder, frame_name)
-    t = 0
+    f = 0
+    for frame_path in frames:
+        # Detect reference marker
+        markerLocationArray_n = detect_high_accuracy_marker_zero('frames\\'+frame_path)
+        if markerLocationArray_n is not None:
+            markerLocationArray = markerLocationArray_n
+            print("Marker Corners:", markerLocationArray)
 
-    # Run detection + tracking
-    frame = system.process_frame(frame_path, t)
+        # Build homography matrix
+        H = calculate_homography(markerLocationArray, 16.5)
+
+        # Run Detection
+        frame = system.process_frame("frames\\"+frame_path,f)
+        f += 1
 
     # Access tracked pixel positions
     objectPixelDict = system.timeline
@@ -63,11 +60,11 @@ if __name__ == "__main__":
     # Convert tracked pixels to real-world coordinates
     print("\nReal World Coordinates (cm):")
     
-    for obj_id in objectPixelDict[t].keys():
-        pixel_point = objectPixelDict[t][obj_id]["bottom_middle"]
-        world_coords = get_2d_localization_homography(pixel_point, H)
-        print(f"{obj_id}: {world_coords}")
+    for t in range(len(frames)):
+        print(f"\n######## TIMESTEP: {t} #########\n")
+        for obj_id in objectPixelDict[t].keys():
+            pixel_point = objectPixelDict[t][obj_id]["bottom_middle"]
+            world_coords = get_2d_localization_homography(pixel_point, H)
+            print(f"{obj_id}: {world_coords}")
 
-    cv2.imshow("Tracked Frame", frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
