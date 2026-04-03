@@ -95,7 +95,7 @@ class Player:
 
         # Now we update the original dictionary with the interpolated points
         for i, time in enumerate(sorted_times):
-            if points[i] is not None and self.times_to_pos[time][0]['CONFIDENCE'] < 0:
+            if points[i] is not None and self.times_to_pos[time] is None:
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
                 self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
@@ -192,24 +192,21 @@ class Player:
                     numMissingPts = int(right_index_1 - left_index_1)
                     for j in range(numMissingPts - 1):
                         normalized_current_step = (j + 1) / numMissingPts
-                        interpolated_point = []
                         val = []
                         val.append(catmull_formula(left_point_2[0], left_point_1[0], right_point_1[0], right_point_2[0], normalized_current_step))
                         val.append(catmull_formula(left_point_2[1], left_point_1[1], right_point_1[1], right_point_2[1], normalized_current_step))
-                        interpolated_point.append(val)
-                        print("appended")
-                        points[i + j] = list(interpolated_point)
+                        points[i + j] = val
                     i += j
 
                     
 
         # Now we update the original dictionary with the interpolated points
         for i, time in enumerate(sorted_times):
-            if points[i] is not None and temp_times_to_pos[time][0]['CONFIDENCE'] < 0:
+            if points[i] is not None and temp_times_to_pos[time] is None:
                 if (self.times_to_pos.get(time, None) is None):
                     self.times_to_pos[time] = [{}]
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
-                self.times_to_pos[time][0]['CONFIDENCE'] = 0.05 # Mark as interpolated 
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.001 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 1 
         if (doBasicInterpolatePass):
             self.basicInterpolateFill(timestep)
@@ -285,9 +282,6 @@ class Player:
                 weights.append(data['CONFIDENCE'])
 
             average_weights = sum(weights) / len(weights)
-
-            print(points_y)
-            print(points_x)
 
             new_y = weighted_geometric_avrg(points_y,weights)
             new_x = weighted_geometric_avrg(points_x,weights)
@@ -667,20 +661,22 @@ class Teams_and_Meta:
             for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
                     self.teams[i].list_of_players[j].combine_geometric_iterative(other.teams[i].list_of_players[j], bayesian)
-        self.fill_std_dev(orig)
-        
         
         if fill:
             # we need to interpolate.
             for team in self.teams:
                 for player in team.list_of_players:
-                    player.basicInterpolateFill(float(self.meta['time_step']))
+                    player.splineInterpolateFill(float(self.meta['time_step']), True)
+
+        self.fill_std_dev(orig)
 
     def fill_std_dev(self, past_self):
         """Computes the standard deviation for each point for each player. Requires compressed input"""
         for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
                     for time in self.teams[i].list_of_players[j].times_to_pos.keys():
+                        if self.teams[i].list_of_players[j].times_to_pos[time] is None or len(self.teams[i].list_of_players[j].times_to_pos[time]) == 0:
+                            continue
                         x_mean = self.teams[i].list_of_players[j].times_to_pos[time][0]['LOCATION'][0]
                         y_mean = self.teams[i].list_of_players[j].times_to_pos[time][0]['LOCATION'][1]
                         pointsX = []
@@ -700,7 +696,9 @@ class Teams_and_Meta:
         sds = []
         for i in range(len(self.teams)):
                 for j in range(len(self.teams[i].list_of_players)):
-                    for time in self.teams[i].list_of_players[j].times_to_pos.keys():                        
+                    for time in self.teams[i].list_of_players[j].times_to_pos.keys():
+                        if self.teams[i].list_of_players[j].times_to_pos[time] is None or len(self.teams[i].list_of_players[j].times_to_pos[time]) == 0:
+                            continue                        
                         sds.append(self.teams[i].list_of_players[j].times_to_pos[time][0]['SD'])
         self.meta['net_standard_deviation'] = net_standard_deviation(sds, len(sds))
 
