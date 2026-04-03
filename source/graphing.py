@@ -82,7 +82,7 @@ def process_iteration(i, file_data, random_thing):
     index = i + 1
     
     # 1. Run the heavy reconstruction
-    r = create_reconstructed(file_data, index, 25, 15, 75, random_thing, True)
+    r = create_reconstructed(file_data, index, 7.5, 15, 75, random_thing, True)
     
     # 2. Prevent Race Conditions
     # Appending the index ensures cores aren't writing over each other.

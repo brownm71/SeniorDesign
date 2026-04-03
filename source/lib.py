@@ -97,7 +97,7 @@ class Player:
         for i, time in enumerate(sorted_times):
             if points[i] is not None and self.times_to_pos[time] is None:
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
-                self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.01 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 1 # TODO What to do here?? 
 
     def splineInterpolateFill(self, timestep = 1, doBasicInterpolatePass = False):
@@ -206,7 +206,7 @@ class Player:
                 if (self.times_to_pos.get(time, None) is None):
                     self.times_to_pos[time] = [{}]
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
-                self.times_to_pos[time][0]['CONFIDENCE'] = 0.001 # Mark as interpolated 
+                self.times_to_pos[time][0]['CONFIDENCE'] = 0.05 # Mark as interpolated 
                 self.times_to_pos[time][0]['NUMPOINTS'] = 1 
         if (doBasicInterpolatePass):
             self.basicInterpolateFill(timestep)
