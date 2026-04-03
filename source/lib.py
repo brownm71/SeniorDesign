@@ -98,7 +98,7 @@ class Player:
             if points[i] is not None and self.times_to_pos[time] is None:
                 self.times_to_pos[time][0]['LOCATION'] = points[i]
                 self.times_to_pos[time][0]['CONFIDENCE'] = 0.1 # Mark as interpolated 
-                self.times_to_pos[time][0]['NUMPOINTS'] = 0 # TODO What to do here?? 
+                self.times_to_pos[time][0]['NUMPOINTS'] = 1 # TODO What to do here?? 
 
     def splineInterpolateFill(self, timestep = 1, doBasicInterpolatePass = False):
         """Take all the points, and fill in missing ones using Spline Interpolation."""
