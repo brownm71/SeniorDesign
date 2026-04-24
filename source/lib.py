@@ -646,7 +646,7 @@ class Teams_and_Meta:
         res = Teams_and_Meta(res_teams,newMeta)
         return res
     
-    def combine(self,other,method = 'Arithmetic',fill = False, bayesian = False):
+    def combine(self,other,method = 'Arithmetic',fill = False, bayesian = True):
         if self.meta['game_ID'] != other.meta['game_ID']:
             raise Exception("Files do not share a Game ID.")
         

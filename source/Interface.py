@@ -72,16 +72,18 @@ class STI:
             res.append(team.name)
         return res
     
-    def combine_files(self,filenames_to_combine : list[str],method = 'A'):
+    def combine_files(self,filenames_to_combine : list[str],method = 'A', bayesian = True):
         """
         merges any number of seperate files into this file, using one of the given Methods:
         \n"A" : Arithmetic Mean (Good for most cases)
         \n"G" : Geometric Mean
+        \n"GI" : Geometric Iterative
         \n"H" : Historic (Keeps all datapoints and does no math)
 
         :param filenames_to_combine: List of paths to the files.
         :type filenames_to_combine: list[str]
-        :param method: determains the method used to combine.
+        :param method: determines the method used to combine.
+        :param bayesian: boolean flag for Bayesian confidence updates.
         """
         # no matter the branch, we need to read in the files.
         files : list[Teams_and_Meta] = []
@@ -99,17 +101,17 @@ class STI:
             # Arithmeitic Mean
             # go through each one and combine it with the parent object
             for file in files:
-                self.parent_object.combine(file)
+                self.parent_object.combine(file, method='Arithmetic', bayesian=bayesian)
                 
         elif method == 'G':
             # Geometric Mean
-            # First get historic
             for file in files:
-                self.parent_object.combine_historic(file)
-            # now we compress Geometricly
-            for team in self.parent_object.teams:
-                for player in team.list_of_players:
-                    player.compress_geometric()
+                self.parent_object.combine(file, method='Geometric', bayesian=bayesian)
+
+        elif method == 'GI':
+            # Geometric Iterative
+            for file in files:
+                self.parent_object.combine(file, method='GeometricIt', bayesian=bayesian)
 
         elif method == 'H':
             # Historic Method
@@ -118,16 +120,18 @@ class STI:
         else:
             raise Exception(f'{method} does not represent a known method.')
 
-    def combine_STI(self,STIs_to_combine : list[STI],method = 'A'):
+    def combine_STI(self,STIs_to_combine : list[STI],method = 'A', bayesian = True):
         """
         merges any number of seperate STIs into this STI, using one of the given Methods:
         \n"A" : Arithmetic Mean (Good for most cases)
         \n"G" : Geometric Mean
+        \n"GI" : Geometric Iterative
         \n"H" : Historic (Keeps all datapoints and does no math)
 
         :param STIs_to_combine: List of STIs.
         :type STIs_to_combine: list[STI]
-        :param method: determains the method used to combine.
+        :param method: determines the method used to combine.
+        :param bayesian: boolean flag for Bayesian confidence updates.
         """
         # check the game IDs
         for sti in STIs_to_combine:
@@ -138,17 +142,18 @@ class STI:
             # Arithmeitic Mean
             # go through each one and combine it with the parent object
             for sti in STIs_to_combine:
-                self.parent_object.combine(sti.parent_object)
+                self.parent_object.combine(sti.parent_object, method='Arithmetic', bayesian=bayesian)
 
         elif method == 'G':
             # Geometric Mean
             # First get historic
             for sti in STIs_to_combine:
-                self.parent_object.combine_historic(sti.parent_object)
-            # now we compress Geometricly
-            for team in self.parent_object.teams:
-                for player in team.list_of_players:
-                    player.compress_geometric()
+                self.parent_object.combine(sti.parent_object, method='Geometric', bayesian=bayesian)
+
+        elif method == 'GI':
+            # Geometric Iterative
+            for sti in STIs_to_combine:
+                self.parent_object.combine(sti.parent_object, method='GeometricIt', bayesian=bayesian)
 
         elif method == 'H':
             # Historic Method
@@ -157,16 +162,18 @@ class STI:
         else:
             raise Exception(f'{method} does not represent a known method.')
 
-    def combine_Teams_and_Meta(self,Teams_and_Meta_to_combine : list[Teams_and_Meta],method = 'A'):
+    def combine_Teams_and_Meta(self,Teams_and_Meta_to_combine : list[Teams_and_Meta],method = 'A', bayesian = True):
         """
         merges any number of seperate Teams_and_Meta into this STI, using one of the given Methods:
         \n"A" : Arithmetic Mean (Good for most cases)
         \n"G" : Geometric Mean
+        \n"GI" : Geometric Iterative
         \n"H" : Historic (Keeps all datapoints and does no math)
 
         :param Teams_and_Meta_to_combine: List of Teams_and_Meta objects.
         :type Teams_and_Meta_to_combine: list[Teams_and_Meta]
-        :param method: determains the method used to combine.
+        :param method: determines the method used to combine.
+        :param bayesian: boolean flag for Bayesian confidence updates.
         """
         # check the game IDs
         for tm in Teams_and_Meta_to_combine:
@@ -177,17 +184,17 @@ class STI:
             # Arithmeitic Mean
             # go through each one and combine it with the parent object
             for tm in Teams_and_Meta_to_combine:
-                self.parent_object.combine(tm)
+                self.parent_object.combine(tm, method='Arithmetic', bayesian=bayesian)
 
         elif method == 'G':
             # Geometric Mean
-            # First get historic
             for tm in Teams_and_Meta_to_combine:
-                self.parent_object.combine_historic(tm)
-            # now we compress Geometricly
-            for team in self.parent_object.teams:
-                for player in team.list_of_players:
-                    player.compress_geometric()
+                self.parent_object.combine(tm, method='Geometric', bayesian=bayesian)
+
+        elif method == 'GI':
+            # Geometric Iterative
+            for tm in Teams_and_Meta_to_combine:
+                self.parent_object.combine(tm, method='GeometricIt', bayesian=bayesian)
 
         elif method == 'H':
             # Historic Method
