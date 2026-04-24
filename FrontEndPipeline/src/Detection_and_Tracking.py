@@ -425,7 +425,7 @@ if __name__ == "__main__":
     import time
     # Initialize the multi-processor system
     # Suggestion: Use 2-4 processes to avoid exhausting GPU memory (VRAM)
-    system = multi_proccessor(num_processes=2) 
+    system = multi_proccessor(num_processes=8) 
     frame_folder = "frames"
     
     start_time = time.time()

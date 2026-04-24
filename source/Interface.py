@@ -3,7 +3,7 @@ from fileIO import readJson, writeJson
 
 class STI:
     """
-    Spacial Temporal Interface
+    Spatial Temporal Interface
     This object acts as an interface to the rest of the program, allowing ease of use with 
     built-in helper functions:
 
