@@ -82,7 +82,7 @@ def process_iteration(i, file_data, random_thing):
     index = i + 1
     
     # 1. Run the heavy reconstruction
-    r = create_reconstructed(file_data, index, 7.5, 15, 75, random_thing, True)
+    r = create_reconstructed(file_data, index, 10, 15, 75, random_thing, True)
     
     # 2. Prevent Race Conditions
     # Appending the index ensures cores aren't writing over each other.
@@ -95,6 +95,43 @@ def process_iteration(i, file_data, random_thing):
     
     # Return the data so the main process can plot it
     return index, avg_conf, pass_rate
+
+
+def process_iteration_2(i, file_data, random_thing):
+    """
+    Worker function executed by each core. 
+    It must be at the top level of the script.
+    """
+    # Setting the seed inside the worker replicates your original logic
+    random.seed(42) 
+    
+    index = i + 1
+    
+    # 1. Run the heavy reconstruction
+    r = create_reconstructed(file_data, index, 10, 15, 75, random_thing, True)
+    
+    # 2. Prevent Race Conditions
+    # Appending the index ensures cores aren't writing over each other.
+    # writeJson(f"jimmy_{index}.json", r)
+    numFailedPoints = 0
+    abs_diff = []
+    for a in range(len(r.teams)):
+         for b in range(len(r.teams[a].list_of_players)):
+              for time in r.teams[a].list_of_players[b].times_to_pos.keys():
+                   x_real = file_data.teams[a].list_of_players[b].times_to_pos[time][0]['LOCATION'][0]
+                   y_real = file_data.teams[a].list_of_players[b].times_to_pos[time][0]['LOCATION'][1]
+                   if (len(r.teams[a].list_of_players[b].times_to_pos[time]) == 0):
+                        numFailedPoints += 1
+                        continue
+                   x_calc = r.teams[a].list_of_players[b].times_to_pos[time][0]['LOCATION'][0]
+                   y_calc = r.teams[a].list_of_players[b].times_to_pos[time][0]['LOCATION'][1]
+
+                   abs_diff.append(math.sqrt((y_real - y_calc)**2 + (x_real - x_calc)**2))
+    
+    print("Failed points for worker " + str(i) + ": " + str(numFailedPoints))
+    averageDeviation = sum(abs_diff) / len(abs_diff)
+    # Return the data so the main process can plot it
+    return index, averageDeviation
 
 
 if __name__ == "__main__":
@@ -111,26 +148,40 @@ if __name__ == "__main__":
     # Initialize a pool of workers using all available CPU cores
     with mp.Pool(processes=mp.cpu_count()) as pool:
         # starmap unpacks our tuple of arguments and feeds them to the worker
-        results = pool.starmap(process_iteration, tasks)
+        results = pool.starmap(process_iteration_2, tasks)
 
     # Unpack the returned results into your original dictionary format
-    for index, avg_conf, pass_rate in results:
-        result[index] = avg_conf
-        r2[index] = pass_rate
+    # for index, avg_conf, pass_rate in results:
+    #     result[index] = avg_conf
+    #     r2[index] = pass_rate
+    for index, average_dev in results:
+         result[index] = average_dev
 
     # IMPORTANT: Multiprocessing can return results out of order!
     # We must sort the x_values so the matplotlib lines draw correctly from left to right.
     x_values = sorted(result.keys())
     y_values = [result[x] for x in x_values]
-    y_val_2 = [r2[x] for x in x_values]
+    # y_val_2 = [r2[x] for x in x_values]
+
+    # # Plotting code remains exactly the same
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(x_values, y_values, label='Data Set Confidence', marker='o', linestyle='-')
+    # plt.plot(x_values, y_val_2, label='Proportion of Real Points Within One Average Standard Deviation of Calculated Point', marker='x', linestyle='--')
+    # plt.title('Data Set Confidence Compared to Proportion of Real Points Within One Average Standard Deviation of Calculated Point')
+    # plt.xlabel('Number of Flawed Input Files')
+    # plt.ylabel('Probability')
+    # plt.ylim(0, 1.0)
+    # plt.xticks(x_values)
+    # plt.legend()
+    # plt.grid(True)
+    # plt.show()
 
     # Plotting code remains exactly the same
     plt.figure(figsize=(10, 6))
-    plt.plot(x_values, y_values, label='Confidence', marker='o', linestyle='-')
-    plt.plot(x_values, y_val_2, label='Actual % Pass', marker='x', linestyle='--')
-    plt.title('Average Confidence and Pass Rate vs. Number of Combined Files')
-    plt.xlabel('Number of Flawed Files Combined')
-    plt.ylabel('Value / Percentage')
+    plt.plot(x_values, y_values, label='Absolute Deviation', marker='o', linestyle='-')
+    plt.title('Absolute Deviation of Reconstructed Data from Known Data')
+    plt.xlabel('Number of Flawed Input Files')
+    plt.ylabel('Deviation')
     plt.xticks(x_values)
     plt.legend()
     plt.grid(True)

@@ -68,5 +68,4 @@ if __name__ == "__main__":
             world_coords = get_2d_localization_homography(pixel_point, H)
             print(f"{obj_id}: {world_coords}")
 
-        cv2.imwrite("I5.png", frame)
         # cv2.destroyAllWindows()
